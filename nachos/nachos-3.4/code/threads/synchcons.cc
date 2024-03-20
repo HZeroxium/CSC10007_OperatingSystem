@@ -19,7 +19,6 @@ static Semaphore *WLineBlock;
 static void SynchReadFunct(int arg) { synchReadAvail->V(); }
 static void SynchWriteFunct(int arg) { synchWriteAvail->V(); }
 
-
 //----------------------------------------------------------------------
 //   SynchConsole::SynchConsole()
 //	Creates a synchronous console device with standard input and output
@@ -27,11 +26,11 @@ static void SynchWriteFunct(int arg) { synchWriteAvail->V(); }
 
 SynchConsole::SynchConsole()
 {
-	cons = new Console(NULL,NULL,SynchReadFunct,SynchWriteFunct,0);
-	synchReadAvail = new Semaphore("Synch Read Avail",0);
-	synchWriteAvail = new Semaphore("Synch Write Avail",0);
-	RLineBlock = new Semaphore("Read Synch Line Block",1);
-	WLineBlock = new Semaphore("Write Synch Line Block",1);
+	cons = new Console(NULL, NULL, SynchReadFunct, SynchWriteFunct, 0);
+	synchReadAvail = new Semaphore("Synch Read Avail", 0);
+	synchWriteAvail = new Semaphore("Synch Write Avail", 0);
+	RLineBlock = new Semaphore("Read Synch Line Block", 1);
+	WLineBlock = new Semaphore("Write Synch Line Block", 1);
 }
 
 //----------------------------------------------------------------------
@@ -41,18 +40,18 @@ SynchConsole::SynchConsole()
 
 SynchConsole::SynchConsole(char *in, char *out)
 {
-	cons = new Console(in,out,SynchReadFunct,SynchWriteFunct,0);
-	synchReadAvail = new Semaphore("Synch Read Avail",0);
-	synchWriteAvail = new Semaphore("Synch Write Avail",0);
-	RLineBlock = new Semaphore("Read Synch Line Block",1);
-	WLineBlock = new Semaphore("Write Synch Line Block",1);
+	cons = new Console(in, out, SynchReadFunct, SynchWriteFunct, 0);
+	synchReadAvail = new Semaphore("Synch Read Avail", 0);
+	synchWriteAvail = new Semaphore("Synch Write Avail", 0);
+	RLineBlock = new Semaphore("Read Synch Line Block", 1);
+	WLineBlock = new Semaphore("Write Synch Line Block", 1);
 }
 
 //----------------------------------------------------------------------
 //   SynchConsole::~SynchConsole()
 //	Delete a console device
 //----------------------------------------------------------------------
-	
+
 SynchConsole::~SynchConsole()
 {
 	delete cons;
@@ -64,36 +63,35 @@ SynchConsole::~SynchConsole()
 
 //----------------------------------------------------------------------
 //   int SynchConsole::Write(char *into, int numBytes)
-//	Writes numBytes of into buffer to I/O device 
+//	Writes numBytes of into buffer to I/O device
 //	Returns the number of bytes written
 //----------------------------------------------------------------------
 
 int SynchConsole::Write(char *from, int numBytes)
 {
-	int loop;			// General purpose counter
+	int loop; // General purpose counter
 
-	WLineBlock->P();			// Block for the line
+	WLineBlock->P(); // Block for the line
 
-//	printf("[%s]:\n",currentThread->getName());	//DEBUG: Print thread
+	//	printf("[%s]:\n",currentThread->getName());	//DEBUG: Print thread
 
 	for (loop = 0; loop < numBytes; loop++)
 	{
-		cons->PutChar(from[loop]);		// Write and wait
-		synchWriteAvail->P();			// Block for a character
+		cons->PutChar(from[loop]); // Write and wait
+		synchWriteAvail->P();	   // Block for a character
 	}
 
-	WLineBlock->V();				// Free Up
-	return numBytes;				// Return the bytes out
+	WLineBlock->V(); // Free Up
+	return numBytes; // Return the bytes out
 }
 
 //----------------------------------------------------------------------
 //   int SynchConsole::Read(char *into, int numBytes)
-//	Read numBytes of into buffer to I/O device 
+//	Read numBytes of into buffer to I/O device
 //	Returns the number of bytes written  (may be less if CR or ^D)
 //----------------------------------------------------------------------
 
-int
-SynchConsole::Read(char *into, int numBytes)
+int SynchConsole::Read(char *into, int numBytes)
 {
 	int loop;
 	int eolncond = FALSE;
@@ -104,35 +102,35 @@ SynchConsole::Read(char *into, int numBytes)
 
 	loop = 0;
 
-	RLineBlock->P();				// Block for a read line
+	RLineBlock->P(); // Block for a read line
 
-//	printf("{%s}:\n",currentThread->getName());	// DEBUG print thread
+	//	printf("{%s}:\n",currentThread->getName());	// DEBUG print thread
 
-	while ( (loop < numBytes) && (eolncond == FALSE) )
+	while ((loop < numBytes) && (eolncond == FALSE))
 	{
 		do
 		{
-			synchReadAvail->P();		// Block for single char
-			ch = cons->GetChar();		// Get a char (could)
-		} while ( ch == EOF);
+			synchReadAvail->P();  // Block for single char
+			ch = cons->GetChar(); // Get a char (could)
+		} while (ch == EOF);
 
-		if ( (ch == '\012') || (ch == '\001') )
+		if ((ch == '\012') || (ch == '\001'))
 		{
 			eolncond = TRUE;
 		}
 		else
 		{
-			into[loop] = ch;		// Put the char in buf
-			loop++;				// Auto inc
+			into[loop] = ch; // Put the char in buf
+			loop++;			 // Auto inc
 		}
 	}
 
-	RLineBlock->V();				// UnBLock
+	RLineBlock->V(); // UnBLock
 
-	if (ch == '\001')				// CTRL-A Returns -1
-		return -1;				// For end of stream
+	if (ch == '\001') // CTRL-A Returns -1
+		return -1;	  // For end of stream
 	else
-		return loop;				// How many did we rd
+		return loop; // How many did we rd
 }
 
 // CAE - MULTI - END SECTION

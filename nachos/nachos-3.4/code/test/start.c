@@ -9,7 +9,7 @@
 #define IN_ASM
 #include "syscall.h"
 
-        .text   
+        .text
         .align  2
 
 /* -------------------------------------------------------------
@@ -25,7 +25,7 @@
 	.ent	__start
 __start:
 	jal	main
-	move	$4,$0		
+	move	$4,$0
 	jal	Exit	 /* if we return from main, exit(0) */
 	.end __start
 

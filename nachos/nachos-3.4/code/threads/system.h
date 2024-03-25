@@ -15,7 +15,7 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
-#include "synchcons.h"
+
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); // Initialization,
 											   // called before anything else
@@ -28,11 +28,14 @@ extern Scheduler *scheduler;		// the ready list
 extern Interrupt *interrupt;		// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
-extern SynchConsole *synchConsole;	// synchronizes threads using console I/O
 
 #ifdef USER_PROGRAM
 #include "machine.h"
-extern Machine *machine; // user program memory and registers
+#include "synchcons.h"
+#include "synch.h"
+extern Machine *machine;			// user program memory and registers
+extern SynchConsole *gSynchConsole; // synchronizes threads using console I/O
+extern Semaphore *addrLock;			// semaphore
 #endif
 
 #ifdef FILESYS_NEEDED // FILESYS or FILESYS_STUB

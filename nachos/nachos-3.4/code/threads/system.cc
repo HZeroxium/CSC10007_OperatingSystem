@@ -18,7 +18,6 @@ Interrupt *interrupt;        // interrupt status
 Statistics *stats;           // performance metrics
 Timer *timer;                // the hardware timer device,
                              // for invoking context switches
-SynchConsole *synchConsole;  // the synchronized console
 
 #ifdef FILESYS_NEEDED
 FileSystem *fileSystem;
@@ -28,8 +27,9 @@ FileSystem *fileSystem;
 SynchDisk *synchDisk;
 #endif
 
-#ifdef USER_PROGRAM // requires either FILESYS or FILESYS_STUB
-Machine *machine;   // user program memory and registers
+#ifdef USER_PROGRAM          // requires either FILESYS or FILESYS_STUB
+Machine *machine;            // user program memory and registers
+SynchConsole *gSynchConsole; // the synchronized console
 #endif
 
 #ifdef NETWORK

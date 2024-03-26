@@ -35,7 +35,7 @@ extern Timer *timer;				// the hardware alarm clock
 #include "synch.h"
 extern Machine *machine;			// user program memory and registers
 extern SynchConsole *gSynchConsole; // synchronizes threads using console I/O
-extern Semaphore *addrLock;			// semaphore
+
 #endif
 
 #ifdef FILESYS_NEEDED // FILESYS or FILESYS_STUB

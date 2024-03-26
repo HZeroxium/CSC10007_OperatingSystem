@@ -143,27 +143,11 @@ ReadInt:
 
 	.globl PrintInt
 	.ent	PrintInt
-PrintIntr:
+PrintInt:
 	addiu $2,$0,SC_PrintInt
 	syscall
 	j	$31
 	.end PrintInt
-
-	.globl ReadFloat
-	.ent	ReadFloat
-ReadFloat:
-	addiu $2,$0,SC_ReadFloat
-	syscall
-	j	$31
-	.end ReadFloat
-
-	.globl PrintFloat
-	.ent	PrintFloat
-PrintFloat:
-	addiu $2,$0,SC_PrintFloat
-	syscall
-	j	$31
-	.end PrintFloat
 
 	.globl ReadChar
 	.ent	ReadChar
@@ -196,6 +180,22 @@ PrintString:
 	syscall
 	j	$31
 	.end PrintString
+
+.globl ReadFloat
+	.ent	ReadFloat
+ReadFloat:
+	addiu $2,$0,SC_ReadFloat
+	syscall
+	j	$31
+	.end ReadFloat
+
+	.globl PrintFloat
+	.ent	PrintFloat
+PrintFloat:
+	addiu $2,$0,SC_PrintFloat
+	syscall
+	j	$31
+	.end PrintFloat
 
 
 /* dummy function to keep gcc happy */

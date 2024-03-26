@@ -270,6 +270,7 @@ void Handle_SC_PrintInt()
     return IncreasePC();
 }
 
+/// @brief Handle system call ReadFloat from user program
 void Handle_SC_ReadFloat()
 {
     SynchPrint("Enter a float: ");
@@ -323,6 +324,7 @@ void Handle_SC_ReadFloat()
     return IncreasePC();
 }
 
+/// @brief Handle system call PrintFloat from user program
 void Handle_SC_PrintFloat()
 {
     SynchPrint("Float that you entered: ");
@@ -332,6 +334,7 @@ void Handle_SC_PrintFloat()
     return IncreasePC();
 }
 
+/// @brief Handle system call CreateFile from user program
 void Handle_SC_CreateFile()
 {
     int virtualAddr;
@@ -369,6 +372,8 @@ void Handle_SC_CreateFile()
     return IncreasePC();
 }
 
+/// @brief Exception handler for user program system calls
+/// @param which Type of exception
 void ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);

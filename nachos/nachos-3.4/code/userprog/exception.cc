@@ -45,6 +45,13 @@ void SynchPrint(int number)
     SynchPrint("\n");
 }
 
+void SynchPrint(float number)
+{
+    char buffer[MaxFileLength];
+    sprintf(buffer, "%f", number);
+    SynchPrint(buffer);
+    SynchPrint("\n");
+}
 /// @brief Increase Program Counter (needed for each system call)
 void IncreasePC()
 {
@@ -176,6 +183,7 @@ void Handle_SC_ReadChar()
     return IncreasePC();
 }
 
+/// @brief Handle system call PrintChar from user program
 void Handle_SC_PrintChar()
 {
     // Read character from register 4
@@ -190,6 +198,7 @@ void Handle_SC_PrintChar()
     return IncreasePC();
 }
 
+/// @brief Handle system call ReadString from user program
 void Handle_SC_ReadString()
 {
     int virtAddr;        // Virtual address of input string from user space
@@ -198,11 +207,11 @@ void Handle_SC_ReadString()
 
     // SynchPrint("Enter a string: ");
 
-    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string from register 4
-    length = machine->ReadRegister(5);      // Read maximum length of input string from register 5
-    buffer = User2System(virtAddr, length); // Copy chuoi tu vung nho User Space sang System Space
-    gSynchConsole->Read(buffer, length);    // Goi ham Read cua SynchConsole de doc chuoi
-    System2User(virtAddr, length, buffer);  // Copy chuoi tu vung nho System Space sang vung nho User Space
+    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string
+    length = machine->ReadRegister(5);      // Read maximum length of input string
+    buffer = User2System(virtAddr, length); // Copy buffer from User memory space to System memory space
+    gSynchConsole->Read(buffer, length);    // Use SynchConsole to read buffer from console
+    System2User(virtAddr, length, buffer);  // Copy buffer from System memory space to User memory space
     delete buffer;
     return IncreasePC();
 }
@@ -214,14 +223,13 @@ void Handle_SC_PrintString()
     char *buffer;
     int length = 0;
 
-    virtAddr = machine->ReadRegister(4); // Read virtual address of input string from register 4
+    virtAddr = machine->ReadRegister(4); // Read virtual address of string
 
     buffer = User2System(virtAddr, 255); // Copy buffer from User memory space to System memory space
 
     while (buffer[length] != 0) // Calculate the length of buffer
         length++;
 
-    SynchPrint("String that you entered: ");
     gSynchConsole->Write(buffer, length + 1); // Print buffer to console
 
     delete buffer;
@@ -266,7 +274,8 @@ void Handle_SC_PrintInt()
 {
     SynchPrint("Integer that you entered: ");
     int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
-    SynchPrint(number);                    // Print number to console
+    int *_number = &number;
+    SynchPrint(*_number); // Print number to console
     return IncreasePC();
 }
 
@@ -316,7 +325,6 @@ void Handle_SC_ReadFloat()
     if (isNegative)
         result = -result;
     machine->WriteRegister(2, result);
-    machine->WriteRegister(3, decimal);
     SynchPrint("Float that you entered: ");
     SynchPrint(result);
     SynchPrint(".");
@@ -329,8 +337,10 @@ void Handle_SC_PrintFloat()
 {
     SynchPrint("Float that you entered: ");
     int number = machine->ReadRegister(4);
-    SynchPrint(number);
+    float *f = (float *)number;
+    SynchPrint(*f);
     SynchPrint(".");
+    // SynchPrint(decimal);
     return IncreasePC();
 }
 
@@ -366,7 +376,7 @@ void Handle_SC_CreateFile()
         return;
     }
 
-    printf("\n Create file '%s' success\n", filename);
+    // printf("\n Create file '%s' success\n", filename);
     machine->WriteRegister(2, 0); // return the result to system call register 2
     delete filename;
     return IncreasePC();

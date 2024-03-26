@@ -26,41 +26,17 @@
 #include "syscall.h"
 
 #define MaxFileLength 32
-
 #define MAX_NUM_LENGTH 11
 
-bool compareNumAndString(int integer, const char *s)
-{
-    if (integer == 0)
-        return strcmp(s, "0") == 0;
-
-    int len = strlen(s);
-
-    if (integer < 0 && s[0] != '-')
-        return false;
-
-    if (integer < 0)
-        s++, --len, integer = -integer;
-
-    while (integer > 0)
-    {
-        int digit = integer % 10;
-
-        if (s[len - 1] - '0' != digit)
-            return false;
-
-        --len;
-        integer /= 10;
-    }
-
-    return len == 0;
-}
-
+/// @brief Print buffer to console instantly
+/// @param buffer Buffer to print
 void SynchPrint(char *buffer)
 {
     gSynchConsole->Write(buffer, strlen(buffer) + 1);
 }
 
+/// @brief Print number to console instantly
+/// @param number Number to print
 void SynchPrint(int number)
 {
     char buffer[MaxFileLength];
@@ -69,47 +45,7 @@ void SynchPrint(int number)
     SynchPrint("\n");
 }
 
-int SysReadNum()
-{
-    char _numberBuffer[MAX_NUM_LENGTH + 2];
-    memset(_numberBuffer, 0, sizeof(_numberBuffer));
-
-    int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1);
-    // Read nothing -> return 0
-    if (len == 0)
-        return 0;
-
-    // Check comment below to understand this line of code
-    bool isNegative = (_numberBuffer[0] == '-');
-
-    int result = 0;
-
-    for (int i = isNegative; i < len; ++i)
-    {
-        char c = _numberBuffer[i];
-        if (c < '0' || c > '9')
-        {
-            DEBUG('a', "Expected number but %s found\n", _numberBuffer);
-            return 0;
-        }
-        result = result * 10 + (c - '0');
-    }
-    return result;
-}
-
-void PrintPC()
-{
-    int prevCounter = machine->ReadRegister(PrevPCReg);
-    int counter = machine->ReadRegister(PCReg);
-    int nextCounter = machine->ReadRegister(NextPCReg);
-    SynchPrint("+ PrevPC: ");
-    SynchPrint(prevCounter);
-    SynchPrint("+ PC: ");
-    SynchPrint(counter);
-    SynchPrint("+ NextPC: ");
-    SynchPrint(nextCounter);
-}
-
+/// @brief Increase Program Counter (needed for each system call)
 void IncreasePC()
 {
     int counter = machine->ReadRegister(PCReg);
@@ -119,24 +55,24 @@ void IncreasePC()
     machine->WriteRegister(NextPCReg, counter + 4);
 }
 
-// Input: - User space address (int)
-// - Limit of buffer (int)
-// Output:- Buffer (char*)
-// Purpose: Copy buffer from User memory space to System memory space
+/// @brief Copy buffer from User memory space to System memory space
+/// @param virtAddr User space address
+/// @param limit Limit of buffer
+/// @return Buffer from kernel space
 char *User2System(int virtAddr, int limit)
 {
-    int i; // chi so index
+    int i; // Index of buffer
     int oneChar;
     char *kernelBuf = NULL;
-    kernelBuf = new char[limit + 1]; // can cho chuoi terminal
+    kernelBuf = new char[limit + 1]; // For terminal string
     if (kernelBuf == NULL)
         return kernelBuf;
 
-    memset(kernelBuf, 0, limit + 1);
+    memset(kernelBuf, 0, limit + 1); // Fill buffer with 0
 
     for (i = 0; i < limit; i++)
     {
-        machine->ReadMem(virtAddr + i, 1, &oneChar);
+        machine->ReadMem(virtAddr + i, 1, &oneChar); // Read 1 byte from User memory space
         kernelBuf[i] = (char)oneChar;
         if (oneChar == 0)
             break;
@@ -144,23 +80,24 @@ char *User2System(int virtAddr, int limit)
     return kernelBuf;
 }
 
-// Input: - User space address (int)
-// - Limit of buffer (int)
-// - Buffer (char[])
-// Output:- Number of bytes copied (int)
-// Purpose: Copy buffer from System memory space to User memory space
+/// @brief Copy buffer from System memory space to User memory space
+/// @param virtAddr User space address
+/// @param len Limit of buffer
+/// @param buffer Buffer from kernel space
+/// @return Number of bytes copied
 int System2User(int virtAddr, int len, char *buffer)
 {
     if (len < 0)
         return -1;
     if (len == 0)
-        return len;
+        return NULL;
     int i = 0;
     int oneChar = 0;
+    // Write memory to buffer until the end of buffer or the end of string
     do
     {
         oneChar = (int)buffer[i];
-        machine->WriteMem(virtAddr + i, 1, oneChar);
+        machine->WriteMem(virtAddr + i, 1, oneChar); // Write 1 byte to User memory space
         i++;
     } while (i < len && oneChar != 0);
     return i;
@@ -188,6 +125,7 @@ int System2User(int virtAddr, int len, char *buffer)
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+/// @brief Handle system call Halt from user program
 void Handle_SC_Halt()
 {
     DEBUG('a', "Shutdown, initiated by user program.\n");
@@ -195,31 +133,39 @@ void Handle_SC_Halt()
     interrupt->Halt();
 }
 
+/// @brief Handle system call ReadChar from user program
 void Handle_SC_ReadChar()
 {
-    int maxBytes = 255;
-    char *buffer = new char[255];
-    int numBytes = 0;
+    int maxBytes = 255;           // Maximum length of buffer
+    char *buffer = new char[255]; // Buffer to store data
+    int numBytes = 0;             // The number of bytes read from console
+
+    // Check if buffer is NULL (not enough memory in system)
     if (buffer == NULL)
     {
         printf("Not enough memory in system\n");
-        machine->WriteRegister(2, 0);
+        machine->WriteRegister(2, 0); // Return 0 to register 2
         return;
     }
-    SynchPrint("Enter a character: ");
-    numBytes = gSynchConsole->Read(buffer, maxBytes);
+
+    // SynchPrint("Enter a character: ");
+    numBytes = gSynchConsole->Read(buffer, maxBytes); // Read buffer from console and return the number of bytes read
+
+    // Check if the number of bytes read is greater than 1
     if (numBytes > 1)
     {
         SynchPrint("You can only enter 1 character!");
         DEBUG('a', "\nERROR: You can only enter 1 character!");
         machine->WriteRegister(2, 0);
     }
+    // Check if the number of bytes read is 0: empty character
     else if (numBytes == 0)
     {
         SynchPrint("Empty character!");
         DEBUG('a', "\nERROR: Empty character!");
         machine->WriteRegister(2, 0);
     }
+    // If the number of bytes read is 1, return the character to register 2
     else
     {
         char c = *buffer;
@@ -232,11 +178,13 @@ void Handle_SC_ReadChar()
 
 void Handle_SC_PrintChar()
 {
+    // Read character from register 4
     char c = (char)machine->ReadRegister(4);
+    // Check if the character is not null
     if (c != 0)
     {
         SynchPrint("Character that you entered: ");
-        gSynchConsole->Write(&c, 1);
+        gSynchConsole->Write(&c, 1); // Write the character to console
     }
 
     return IncreasePC();
@@ -244,11 +192,14 @@ void Handle_SC_PrintChar()
 
 void Handle_SC_ReadString()
 {
-    int virtAddr, length;
-    char *buffer;
-    SynchPrint("Enter a string: ");
-    virtAddr = machine->ReadRegister(4);    // Lay dia chi tham so buffer truyen vao tu thanh ghi so 4
-    length = machine->ReadRegister(5);      // Lay do dai toi da cua chuoi nhap vao tu thanh ghi so 5
+    int virtAddr;        // Virtual address of input string from user space
+    int length;          // Length of input string
+    char *buffer = NULL; // Buffer to store input string
+
+    // SynchPrint("Enter a string: ");
+
+    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string from register 4
+    length = machine->ReadRegister(5);      // Read maximum length of input string from register 5
     buffer = User2System(virtAddr, length); // Copy chuoi tu vung nho User Space sang System Space
     gSynchConsole->Read(buffer, length);    // Goi ham Read cua SynchConsole de doc chuoi
     System2User(virtAddr, length, buffer);  // Copy chuoi tu vung nho System Space sang vung nho User Space
@@ -256,34 +207,41 @@ void Handle_SC_ReadString()
     return IncreasePC();
 }
 
+/// @brief Handle system call PrintString from user program
 void Handle_SC_PrintString()
 {
     int virtAddr;
     char *buffer;
-    virtAddr = machine->ReadRegister(4); // Lay dia chi cua tham so buffer tu thanh ghi so 4
-    buffer = User2System(virtAddr, 255); // Copy chuoi tu vung nho User Space sang System Space voi bo dem buffer dai 255 ki tu
     int length = 0;
-    while (buffer[length] != 0)
-        length++; // Dem do dai that cua chuoi
+
+    virtAddr = machine->ReadRegister(4); // Read virtual address of input string from register 4
+
+    buffer = User2System(virtAddr, 255); // Copy buffer from User memory space to System memory space
+
+    while (buffer[length] != 0) // Calculate the length of buffer
+        length++;
+
     SynchPrint("String that you entered: ");
-    gSynchConsole->Write(buffer, length + 1); // Goi ham Write cua SynchConsole de in chuoi
+    gSynchConsole->Write(buffer, length + 1); // Print buffer to console
+
     delete buffer;
     return IncreasePC();
 }
 
+/// @brief Handle system call ReadInt from user program
 void Handle_SC_ReadInt()
 {
     SynchPrint("Enter an integer: ");
-    int result = 0;
-    char _numberBuffer[MAX_NUM_LENGTH + 2];
-    memset(_numberBuffer, 0, sizeof(_numberBuffer));
+    int result = 0;                                  // Store the result
+    char _numberBuffer[MAX_NUM_LENGTH + 2];          // Buffer to store number buffer
+    memset(_numberBuffer, 0, sizeof(_numberBuffer)); // Fill buffer with 0
 
-    int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1);
-    // Read nothing -> return 0
+    int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1); // Read buffer from console
+    // If nothing is read, return 0
     if (len == 0)
         return;
 
-    // Check comment below to understand this line of code
+    // Convert buffer to number
     bool isNegative = (_numberBuffer[0] == '-');
 
     for (int i = isNegative; i < len; ++i)
@@ -298,15 +256,17 @@ void Handle_SC_ReadInt()
     }
     if (isNegative)
         result = -result;
-    machine->WriteRegister(2, result);
+
+    machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }
 
+/// @brief Handle system call PrintInt from user program
 void Handle_SC_PrintInt()
 {
     SynchPrint("Integer that you entered: ");
-    int number = machine->ReadRegister(4);
-    SynchPrint(number);
+    int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
+    SynchPrint(number);                    // Print number to console
     return IncreasePC();
 }
 
@@ -418,7 +378,6 @@ void ExceptionHandler(ExceptionType which)
     case SyscallException:
         switch (type)
         {
-
         case SC_Halt:
             return Handle_SC_Halt();
         case SC_ReadInt:

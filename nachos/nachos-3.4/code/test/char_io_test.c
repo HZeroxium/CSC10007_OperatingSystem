@@ -2,6 +2,5 @@
 
 int main()
 {
-    char c = ReadChar();
-    PrintChar(c);
+    PrintChar(ReadChar());
 }

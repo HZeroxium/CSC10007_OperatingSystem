@@ -191,7 +191,7 @@ void Handle_SC_PrintChar()
     // Check if the character is not null
     if (c != 0)
     {
-        SynchPrint("Character that you entered: ");
+        // SynchPrint("Character that you entered: ");
         gSynchConsole->Write(&c, 1); // Write the character to console
     }
 
@@ -239,7 +239,6 @@ void Handle_SC_PrintString()
 /// @brief Handle system call ReadInt from user program
 void Handle_SC_ReadInt()
 {
-    SynchPrint("Enter an integer: ");
     int result = 0;                                  // Store the result
     char _numberBuffer[MAX_NUM_LENGTH + 2];          // Buffer to store number buffer
     memset(_numberBuffer, 0, sizeof(_numberBuffer)); // Fill buffer with 0
@@ -272,7 +271,6 @@ void Handle_SC_ReadInt()
 /// @brief Handle system call PrintInt from user program
 void Handle_SC_PrintInt()
 {
-    SynchPrint("Integer that you entered: ");
     int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
     int *_number = &number;
     SynchPrint(*_number); // Print number to console

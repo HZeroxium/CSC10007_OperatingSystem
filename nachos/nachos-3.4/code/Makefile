@@ -2,20 +2,21 @@
 # All rights reserved.  See copyright.h for copyright notice and limitation 
 # of liability and disclaimer of warranty provisions.
 
-MAKE = make
-LPR = lpr
+MAKE = make # Use make to compile the code in the subdirectories 
+LPR = lpr # Use lpr to print the code in the subdirectories (LPR: Line PRint, lpr: line printer)
 
-all: 
+# Top-level Nachos makefile, for compilation of the Nachos source code
+all:
 	cd threads; $(MAKE) depend
 	cd threads; $(MAKE) nachos
-	cd userprog; $(MAKE) depend 
-	cd userprog; $(MAKE) nachos 
+	cd userprog; $(MAKE) depend
+	cd userprog; $(MAKE) nachos
 	cd vm; $(MAKE) depend
-	cd vm; $(MAKE) nachos 
+	cd vm; $(MAKE) nachos
 	cd filesys; $(MAKE) depend
-	cd filesys; $(MAKE) nachos 
+	cd filesys; $(MAKE) nachos
 	cd network; $(MAKE) depend
-	cd network; $(MAKE) nachos 
+	cd network; $(MAKE) nachos
 	cd bin; make all
 	cd test; make all
 

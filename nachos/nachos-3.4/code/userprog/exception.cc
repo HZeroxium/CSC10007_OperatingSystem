@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "filesys.h"
 
 #define MaxFileLength 32
 #define MAX_NUM_LENGTH 11
@@ -239,6 +240,7 @@ void Handle_SC_PrintString()
 /// @brief Handle system call ReadInt from user program
 void Handle_SC_ReadInt()
 {
+    // SynchPrint("Enter an integer: ");
     int result = 0;                                  // Store the result
     char _numberBuffer[MAX_NUM_LENGTH + 2];          // Buffer to store number buffer
     memset(_numberBuffer, 0, sizeof(_numberBuffer)); // Fill buffer with 0
@@ -271,6 +273,7 @@ void Handle_SC_ReadInt()
 /// @brief Handle system call PrintInt from user program
 void Handle_SC_PrintInt()
 {
+    // SynchPrint("Integer that you entered: ");
     int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
     int *_number = &number;
     SynchPrint(*_number); // Print number to console
@@ -380,6 +383,62 @@ void Handle_SC_CreateFile()
     return IncreasePC();
 }
 
+void Handle_SC_Open()
+{
+    int virtAddr = machine->ReadRegister(4);
+    int type = machine->ReadRegister(5);
+    char *filename;
+    filename = User2System(virtAddr, MaxFileLength);
+
+    int freeSlot = fileSystem->FindFreeSlot();
+    if (freeSlot != -1)
+    {
+        if (type == 0 || type == 1)
+        {
+
+            if ((fileSystem->openf[freeSlot] = fileSystem->Open(filename, type)) != NULL)
+            {
+                SynchPrint("Open file success");
+                machine->WriteRegister(2, freeSlot);
+            }
+        }
+        else if (type == 2) // ConsoleInput: stdin
+        {
+            machine->WriteRegister(2, 0);
+        }
+        else // ConsoleOutput: stdout
+        {
+            machine->WriteRegister(2, 1);
+        }
+    }
+    else // No free slot
+    {
+        SynchPrint("No free slot");
+        machine->WriteRegister(2, -1); // Failed to open file, return -1
+    }
+
+    delete[] filename;
+    return IncreasePC();
+}
+
+void Handle_SC_Close()
+{
+    int id = machine->ReadRegister(4);
+    if (id >= 0 && id < 10 && fileSystem->openf[id] != NULL)
+    {
+        delete fileSystem->openf[id];
+        fileSystem->openf[id] = NULL;
+        machine->WriteRegister(2, 0);
+        SynchPrint("Close file success");
+    }
+    else
+    {
+        machine->WriteRegister(2, -1);
+        SynchPrint("Close file failed");
+    }
+    return IncreasePC();
+}
+
 /// @brief Exception handler for user program system calls
 /// @param which Type of exception
 void ExceptionHandler(ExceptionType which)
@@ -413,6 +472,10 @@ void ExceptionHandler(ExceptionType which)
             return Handle_SC_PrintString();
         case SC_CreateFile:
             return Handle_SC_CreateFile();
+        case SC_Open:
+            return Handle_SC_Open();
+        case SC_Close:
+            return Handle_SC_Close();
         default:
             // printf("\nUnexpected user mode exception %d %d\n", which, type);
             printf("\n");

@@ -144,6 +144,18 @@ FileSystem::FileSystem(bool format)
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
     }
+
+    // Cai dat
+    openf = new OpenFile *[15];
+    index = 0;
+    for (int i = 0; i < 15; ++i)
+    {
+        openf[i] = NULL;
+    }
+    openf[index++] = this->Open("stdin", 2);
+    openf[index++] = this->Open("stdout", 3);
+    this->Create("stdin", 0);
+    this->Create("stdout", 0);
 }
 
 //----------------------------------------------------------------------
@@ -229,9 +241,9 @@ bool FileSystem::Create(char *name, int initialSize)
 //
 //	"name" -- the text name of the file to be opened
 //----------------------------------------------------------------------
-
 OpenFile *FileSystem::Open(char *name)
 {
+    // int freeSlot = this->FindFreeSlot();
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
@@ -242,37 +254,39 @@ OpenFile *FileSystem::Open(char *name)
     if (sector >= 0)
         openFile = new OpenFile(sector); // name was found in directory
     delete directory;
-    return openFile; // return NULL if not found
+    // return openFile;				// return NULL if not found
+    index++;
+    return openf[index - 1]; // return NULL if not found
 }
 
-OpenFile *FileSystem::Open(char *filename, int openmode)
+OpenFile *FileSystem::Open(char *name, int type)
 {
-    int freeSlot = this->FindEmptySlot();
+    int freeSlot = this->FindFreeSlot();
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
 
-    DEBUG('f', "Opening file %s\n", filename);
+    DEBUG('f', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
-    sector = directory->Find(filename);
+    sector = directory->Find(name);
     if (sector >= 0)
-        openf[freeSlot] = new OpenFile(sector, openmode); // name was found in directory
+        openf[freeSlot] = new OpenFile(sector, type); // name was found in directory
     delete directory;
     // index++;
     return openf[freeSlot]; // return NULL if not found
 }
 
-int FileSystem::FindEmptySlot()
+// Ham tim slot trong
+int FileSystem::FindFreeSlot()
 {
-    for (int i = 0; i < 15; i++)
+    for (int i = 2; i < 15; i++)
     {
         if (openf[i] == NULL)
-        {
             return i;
-        }
     }
     return -1;
 }
+
 //----------------------------------------------------------------------
 // FileSystem::Remove
 // 	Delete a file from the file system.  This requires:

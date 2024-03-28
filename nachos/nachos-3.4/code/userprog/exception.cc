@@ -44,7 +44,6 @@ void SynchPrint(int number)
     char buffer[MaxFileLength];
     sprintf(buffer, "%d", number);
     SynchPrint(buffer);
-    // SynchPrint("\n");
 }
 
 void SynchPrint(float number)
@@ -52,16 +51,16 @@ void SynchPrint(float number)
     char buffer[MaxFileLength];
     sprintf(buffer, "%f", number);
     SynchPrint(buffer);
-    SynchPrint("\n");
 }
-/// @brief Increase Program Counter (needed for each system call)
+
+/// @brief Increase Program Counter (needed for each system call) (4 bytes for each instruction)
 void IncreasePC()
 {
-    int counter = machine->ReadRegister(PCReg);
-    machine->WriteRegister(PrevPCReg, counter);
-    counter = machine->ReadRegister(NextPCReg);
-    machine->WriteRegister(PCReg, counter);
-    machine->WriteRegister(NextPCReg, counter + 4);
+    int counter = machine->ReadRegister(PCReg);     // Read current Program Counter
+    machine->WriteRegister(PrevPCReg, counter);     // Write current Program Counter to Previous Program Counter
+    counter = machine->ReadRegister(NextPCReg);     // Read Next Program Counter
+    machine->WriteRegister(PCReg, counter);         // Write Next Program Counter to Program Counter
+    machine->WriteRegister(NextPCReg, counter + 4); // Write Next Program Counter + 4 to Next Program Counter
 }
 
 /// @brief Copy buffer from User memory space to System memory space
@@ -148,39 +147,32 @@ void Handle_SC_ReadChar()
     int maxBytes = 255;           // Maximum length of buffer
     char *buffer = new char[255]; // Buffer to store data
     int numBytes = 0;             // The number of bytes read from console
+    char c = 0;                   // Character to store the result
 
-    // Check if buffer is NULL (not enough memory in system)
-    if (buffer == NULL)
+    if (buffer == NULL) // Check if buffer is NULL (not enough memory in system)
     {
         printf("Not enough memory in system\n");
-        machine->WriteRegister(2, 0); // Return 0 to register 2
-        return;
     }
-
-    // SynchPrint("Enter a character: ");
-    numBytes = gSynchConsole->Read(buffer, maxBytes); // Read buffer from console and return the number of bytes read
-
-    // Check if the number of bytes read is greater than 1
-    if (numBytes > 1)
+    else // Buffer is not NULL
     {
-        SynchPrint("You can only enter 1 character!");
-        DEBUG('a', "\nERROR: You can only enter 1 character!");
-        machine->WriteRegister(2, 0);
-    }
-    // Check if the number of bytes read is 0: empty character
-    else if (numBytes == 0)
-    {
-        SynchPrint("Empty character!");
-        DEBUG('a', "\nERROR: Empty character!");
-        machine->WriteRegister(2, 0);
-    }
-    // If the number of bytes read is 1, return the character to register 2
-    else
-    {
-        char c = *buffer;
-        machine->WriteRegister(2, c);
-    }
+        numBytes = gSynchConsole->Read(buffer, maxBytes); // Read buffer from console and return the number of bytes read
 
+        if (numBytes > 1) // Check if the number of bytes read is greater than 1
+        {
+            SynchPrint("\nERROR: You can only enter 1 character!\n");
+            DEBUG('a', "\nERROR: You can only enter 1 character!");
+        }
+        else if (numBytes == 0) // Check if the number of bytes read is 0: empty character
+        {
+            SynchPrint("ERROR: Empty character!\n");
+            DEBUG('a', "\nERROR: Empty character!");
+        }
+        else // If the number of bytes read is 1, return the character to register 2
+        {
+            c = *buffer;
+        }
+    }
+    machine->WriteRegister(2, c); // Write the character to register 2
     delete buffer;
     return IncreasePC();
 }
@@ -188,10 +180,9 @@ void Handle_SC_ReadChar()
 /// @brief Handle system call PrintChar from user program
 void Handle_SC_PrintChar()
 {
-    // Read character from register 4
-    char c = (char)machine->ReadRegister(4);
-    // Check if the character is not null
-    if (c != 0)
+    char c = (char)machine->ReadRegister(4); // Read character parameter from register 4
+
+    if (c != 0) // Check if the character is not null
     {
         // SynchPrint("Character that you entered: ");
         gSynchConsole->Write(&c, 1); // Write the character to console
@@ -207,13 +198,12 @@ void Handle_SC_ReadString()
     int length;          // Length of input string
     char *buffer = NULL; // Buffer to store input string
 
-    // SynchPrint("Enter a string: ");
-
-    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string
-    length = machine->ReadRegister(5);      // Read maximum length of input string
+    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string PARAMETER from register 4
+    length = machine->ReadRegister(5);      // Read maximum length of input string PARAMETER from register 5
     buffer = User2System(virtAddr, length); // Copy buffer from User memory space to System memory space
     gSynchConsole->Read(buffer, length);    // Use SynchConsole to read buffer from console
     System2User(virtAddr, length, buffer);  // Copy buffer from System memory space to User memory space
+
     delete buffer;
     return IncreasePC();
 }
@@ -221,11 +211,11 @@ void Handle_SC_ReadString()
 /// @brief Handle system call PrintString from user program
 void Handle_SC_PrintString()
 {
-    int virtAddr;
-    char *buffer;
-    int length = 0;
+    int virtAddr;   // Virtual address of string from user space (PARAMETER)
+    char *buffer;   // Buffer that stores string for kernel space processing
+    int length = 0; // Length of buffer
 
-    virtAddr = machine->ReadRegister(4); // Read virtual address of string
+    virtAddr = machine->ReadRegister(4); // Read virtual address of string PARAMETER from register 4
 
     buffer = User2System(virtAddr, 1024); // Copy buffer from User memory space to System memory space
 
@@ -241,31 +231,30 @@ void Handle_SC_PrintString()
 /// @brief Handle system call ReadInt from user program
 void Handle_SC_ReadInt()
 {
-    // SynchPrint("Enter an integer: ");
     int result = 0;                                  // Store the result
     char _numberBuffer[MAX_NUM_LENGTH + 2];          // Buffer to store number buffer
     memset(_numberBuffer, 0, sizeof(_numberBuffer)); // Fill buffer with 0
 
     int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1); // Read buffer from console
-    // If nothing is read, return 0
-    if (len == 0)
-        return;
 
-    // Convert buffer to number
-    bool isNegative = (_numberBuffer[0] == '-');
-
-    for (int i = isNegative; i < len; ++i)
+    if (len != 0) // If nothing is read, return 0
     {
-        char c = _numberBuffer[i];
-        if (c < '0' || c > '9')
+        // Process the number buffer to get the result
+        bool isNegative = (_numberBuffer[0] == '-');
+
+        for (int i = isNegative; i < len; ++i)
         {
-            DEBUG('a', "Expected number but %s found\n", _numberBuffer);
-            return;
+            char c = _numberBuffer[i];
+            if (c < '0' || c > '9')
+            {
+                DEBUG('a', "Expected number but %s found\n", _numberBuffer);
+                return;
+            }
+            result = result * 10 + (c - '0');
         }
-        result = result * 10 + (c - '0');
+        if (isNegative)
+            result = -result;
     }
-    if (isNegative)
-        result = -result;
 
     machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
@@ -274,8 +263,7 @@ void Handle_SC_ReadInt()
 /// @brief Handle system call PrintInt from user program
 void Handle_SC_PrintInt()
 {
-    // SynchPrint("Integer that you entered: ");
-    int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
+    int number = machine->ReadRegister(4); // Read value of number PARAMETER from register 4
     SynchPrint(number);                    // Print number to console
     return IncreasePC();
 }
@@ -348,37 +336,33 @@ void Handle_SC_PrintFloat()
 /// @brief Handle system call CreateFile from user program
 void Handle_SC_CreateFile()
 {
-    int virtualAddr;
-    char *filename;
+    int virtualAddr; // Virtual address of the filename
+    char *filename;  //  Buffer to store filename
+    int result = 0;  // Result of the function
 
-    DEBUG('a', "\n SC_Create call ...");
-    DEBUG('a', "\n Reading virtual address of filename");
+    virtualAddr = machine->ReadRegister(4); // Read virtual address of filename PARAMETER from register 4
 
-    // Take the virtual address of the filename from register 4
-    virtualAddr = machine->ReadRegister(4);
-    DEBUG('a', "\n Reading filename.");
+    filename = User2System(virtualAddr, MaxFileLength + 1); // Copy buffer from User memory space to System memory space
 
-    filename = User2System(virtualAddr, 32 + 1);
-    if (filename == NULL)
+    if (filename == NULL) // If filename is NULL (not enough memory in system)
     {
         printf("\n Not enough memory in system");
-        machine->WriteRegister(2, -1); // return the result
-        delete filename;
-        return;
+        result = -1; // Failed to create file, return -1
     }
-
-    DEBUG('a', "\n Finish reading filename.");
-    // Create the file with size = 0
-    if (!fileSystem->Create(filename, 0))
+    else // If filename is not NULL
     {
-        printf("\n Error create file '%s'", filename);
-        machine->WriteRegister(2, -1);
-        delete filename;
-        return;
+        if (!fileSystem->Create(filename, 0)) // If file is not created
+        {
+            // printf("\n Error create file '%s'", filename);
+            result = -1; // Failed to create file, return -1
+        }
+        else // If file is created
+        {
+            result = 0; // Success, return 0
+        }
     }
 
-    // printf("\n Create file '%s' success\n", filename);
-    machine->WriteRegister(2, 0); // return the result to system call register 2
+    machine->WriteRegister(2, result); // return the result to system call register 2
     delete filename;
     return IncreasePC();
 }
@@ -386,87 +370,83 @@ void Handle_SC_CreateFile()
 /// @brief Handle system call Open from user program (Open file)
 void Handle_SC_Open()
 {
-    int virtAddr = machine->ReadRegister(4);
-    int type = machine->ReadRegister(5);
-    char *filename;
+    int virtAddr = machine->ReadRegister(4); // Virtual address of filename PARAMETER from register 4
+    int type = machine->ReadRegister(5);     // Type (Open mode) of the file PARAMETER from register 5
+    char *filename;                          // Buffer to store filename
+    int result = -2;                         // Result of the function
 
-    filename = User2System(virtAddr, MaxFileLength);
-    // SynchPrint(filename);
-    int freeSlot = fileSystem->FindFreeSlot();
-    // SynchPrint("Free slot: ");
-    // SynchPrint(freeSlot);
-    if (freeSlot != -1)
+    filename = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+
+    int freeSlot = fileSystem->FindFreeSlot(); // Find free slot in file system
+
+    if (freeSlot != -1) // If there is free slot
     {
-        if (type == READ_WRITE || type == READ_ONLY)
+        if (type == READ_WRITE || type == READ_ONLY) // Handle ReadOnly and ReadWrite file cases
         {
-            fileSystem->openf[freeSlot] = fileSystem->Open(filename, type);
+            fileSystem->openf[freeSlot] = fileSystem->Open(filename, type); // Open file with filename and type
+
             if (fileSystem->openf[freeSlot] != NULL)
             {
-                // SynchPrint("Open file success");
-                machine->WriteRegister(2, freeSlot);
+                result = freeSlot; // Success, return free slot for normal file
             }
             else // Open file failed
             {
-                // SynchPrint("Open file failed");
-                machine->WriteRegister(2, -1); // Failed to open file, return -1
+                result = -1; // Failed to open file, return -1
             }
         }
         else if (type == STDIN) // ConsoleInput: stdin
         {
-            machine->WriteRegister(2, 0);
+            result = 0; // Success, return 0 for STDIN
         }
         else // ConsoleOutput: stdout
         {
-            machine->WriteRegister(2, 1);
+            result = 1; // Success, return 1 for STDOUT
         }
     }
     else // No free slot
     {
         SynchPrint("No free slot");
-        machine->WriteRegister(2, -1); // Failed to open file, return -1
+        result = -1; // Failed to open file, return -1
     }
     if (filename != NULL)
         delete[] filename;
+
+    machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }
 
 /// @brief Handle system call Close from user program (Close file)
 void Handle_SC_Close()
 {
-    int id = machine->ReadRegister(4);
-    if (id >= 0 && id < 10 && fileSystem->openf[id] != NULL)
+    int id = machine->ReadRegister(4); // Read file descriptor (OpenFileId) PARAMETER from register 4
+    int result = -2;                   // Result of the function
+
+    if (id >= 0 && id < MAX_FILE && fileSystem->openf[id] != NULL) // If file descriptor is in range and file is exist
     {
-        delete fileSystem->openf[id];
-        fileSystem->openf[id] = NULL;
-        machine->WriteRegister(2, 0);
-        // SynchPrint("Close file success");
+        delete fileSystem->openf[id]; // Delete file
+        fileSystem->openf[id] = NULL; // Set file to NULL
+        result = 0;                   // Success, return 0
     }
-    else
+    else // If file descriptor is out of range or file is not exist
     {
-        machine->WriteRegister(2, -1);
-        // SynchPrint("Close file failed");
+        result = -1; // Failed to close file, return -1
     }
+
+    machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }
 
 /// @brief Handle system call SC_Read from user program
 void Handle_SC_Read()
 {
-    /* n. Read "size" bytes from the open file into "buffer".
-     * Return the number of bytes actually read -- if the open file isn't
-     * long enough, or if it is an I/O device, and there aren't enough
-     * characters to read, return whatever is available (for I/O devices,
-     * you should always wait until you can return at least one character).
-     */
-    // int Read(char *buffer, int size, OpenFileId id);
+    int virtAddr = machine->ReadRegister(4);  // Read virtual address of buffer PARAMETER from register 4
+    int charcount = machine->ReadRegister(5); // Read number of characters PARAMETER from register 5
+    int id = machine->ReadRegister(6);        // Read file descriptor PARAMETER from register 6
+    int OldPos;                               // Old position of file (current position of file before read)
+    int NewPos;                               // New position of file (current position of file after read)
+    char *buf;                                // Kernel buffer
+    int result = -3;                          // Value return for Read function
 
-    int virtAddr = machine->ReadRegister(4);  // Virtual address of buffer
-    int charcount = machine->ReadRegister(5); // Number of characters
-    int id = machine->ReadRegister(6);        // File descriptor
-    int OldPos;
-    int NewPos;
-    char *buf;                    // Kernel buffer
-    int result = -3;              // Value return for Read function
     if (id < 0 || id >= MAX_FILE) // If file descriptor is out of range
     {
         SynchPrint("\nOut of range file descriptor.");
@@ -517,16 +497,14 @@ void Handle_SC_Read()
 /// @brief Handle system call SC_Write from user program
 void Handle_SC_Write()
 {
-    /* n. Write "size" bytes from "buffer" to the open file. */
-    // int Write(char *buffer, int size, OpenFileId id);
+    int virtAddr = machine->ReadRegister(4);  // Read virtual address of buffer PARAMETER from register 4
+    int charcount = machine->ReadRegister(5); // Read number of characters PARAMETER from register 5
+    int id = machine->ReadRegister(6);        // Read file descriptor PARAMETER from register 6
+    int OldPos;                               // Old position of file (current position of file before write)
+    int NewPos;                               // New position of file (current position of file after write)
+    char *buf;                                // Kernel buffer
+    int result = -3;                          // Value return for Write function
 
-    int virtAddr = machine->ReadRegister(4);  // Virtual address of buffer
-    int charcount = machine->ReadRegister(5); // Number of characters
-    int id = machine->ReadRegister(6);        // File descriptor
-    int OldPos;
-    int NewPos;
-    char *buf;                   // Kernel buffer
-    int result = -3;             // Value return for Write function
     if (id < 0 || id > MAX_FILE) // If file descriptor is out of range
     {
         SynchPrint("\nOut of range file descriptor.");
@@ -580,11 +558,11 @@ void Handle_SC_Write()
 /// @param which Type of exception
 void ExceptionHandler(ExceptionType which)
 {
-    int type = machine->ReadRegister(2);
+    int type = machine->ReadRegister(2); // Read system call code from register 2
 
     switch (which)
     {
-    case SyscallException:
+    case SyscallException: // System call exception
         switch (type)
         {
         case SC_Halt:
@@ -618,42 +596,39 @@ void ExceptionHandler(ExceptionType which)
         case SC_Write:
             return Handle_SC_Write();
         default:
-            // printf("\nUnexpected user mode exception %d %d\n", which, type);
-            printf("\n");
             interrupt->Halt();
             break;
         }
     case NoException:
         return;
     case PageFaultException:
-        printf("PageFaultException\n");
+        printf("PageFaultException: No valid translation found\n");
         interrupt->Halt();
         break;
     case ReadOnlyException:
-        printf("ReadOnlyException\n");
+        printf("ReadOnlyException: Write attempted to page marked \"read-only\"\n");
         interrupt->Halt();
         break;
     case BusErrorException:
-        printf("BusErrorException\n");
+        printf("BusErrorException: Translation resulted in an invalid physical address\n");
         interrupt->Halt();
         break;
     case AddressErrorException:
-        printf("AddressErrorException\n");
+        printf("AddressErrorException: Unaligned reference or one that was beyond the end of the address space\n");
         interrupt->Halt();
         break;
     case OverflowException:
-        printf("OverflowException\n");
+        printf("OverflowException: Integer overflow in add or sub.\n");
         interrupt->Halt();
         break;
     case IllegalInstrException:
-        printf("IllegalInstrException\n");
+        printf("IllegalInstrException: Unimplemented or reserved instr.\n");
         interrupt->Halt();
         break;
     case NumExceptionTypes:
-        printf("NumExceptionTypes\n");
+        printf("NumExceptionTypes: Number exception types\n");
         interrupt->Halt();
         break;
-
     default:
         printf("Unexpected user mode exception %d %d\n", which, type);
         interrupt->Halt();

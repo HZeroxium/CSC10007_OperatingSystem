@@ -38,7 +38,11 @@
 #include "copyright.h"
 #include "openfile.h"
 
-// OpenFile duy nhat ...
+#define MAX_FILE 15
+#define READ_WRITE 0
+#define READ_ONLY 1
+#define STDIN 2
+#define STDOUT 3
 typedef int OpenFileID;
 #ifdef FILESYS_STUB // Temporarily implement file system calls as
 // calls to UNIX, until the real file system
@@ -47,29 +51,27 @@ typedef int OpenFileID;
 class FileSystem
 {
 public:
-	// Khai bao 2 bien
-	OpenFile **openf; // De kiem tra xem file co dang mo khong
+	OpenFile **openf;
 	int index;
 
-	// Dinh nghia lai ham khoi tao cua FileSystem
 	FileSystem(bool format)
 	{
-		openf = new OpenFile *[15];
+		openf = new OpenFile *[MAX_FILE];
 		index = 0;
-		for (int i = 0; i < 15; ++i)
+		for (int i = 0; i < MAX_FILE; ++i)
 		{
 			openf[i] = NULL;
 		}
 		this->Create("stdin", 0);
 		this->Create("stdout", 0);
-		openf[index++] = this->Open("stdin", 2);
-		openf[index++] = this->Open("stdout", 3);
+		openf[index++] = this->Open("stdin", STDIN);
+		openf[index++] = this->Open("stdout", STDOUT);
 	}
 
 	// Ham huy doi tuong FileSystem
 	~FileSystem()
 	{
-		for (int i = 0; i < 15; ++i)
+		for (int i = 0; i < MAX_FILE; ++i)
 		{
 			if (openf[i] != NULL)
 				delete openf[i];
@@ -98,18 +100,20 @@ public:
 		return new OpenFile(fileDescriptor);
 	}
 
-	// Overload lai ham Open de mo file voi 2 type khac nhau
 	OpenFile *Open(char *name, int type)
 	{
 		int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 		if (fileDescriptor == -1)
+		{
+			// printf("OpenFile *Open(char *name, int type) called with name = %s, type = %d\n", name, type);
 			return NULL;
+		}
+
 		// index++;
 		return new OpenFile(fileDescriptor, type);
 	}
 
-	// Ham tim slot trong
 	int FindFreeSlot()
 	{
 		for (int i = 2; i < 15; i++)
@@ -130,7 +134,6 @@ public:
 class FileSystem
 {
 public:
-	// Khai bao
 	OpenFile **openf;
 	int index;
 

@@ -34,6 +34,7 @@
 void SynchPrint(char *buffer)
 {
     gSynchConsole->Write(buffer, strlen(buffer) + 1);
+    // gSynchConsole->Write("\n", 1);
 }
 
 /// @brief Print number to console instantly
@@ -43,7 +44,7 @@ void SynchPrint(int number)
     char buffer[MaxFileLength];
     sprintf(buffer, "%d", number);
     SynchPrint(buffer);
-    SynchPrint("\n");
+    // SynchPrint("\n");
 }
 
 void SynchPrint(float number)
@@ -226,7 +227,7 @@ void Handle_SC_PrintString()
 
     virtAddr = machine->ReadRegister(4); // Read virtual address of string
 
-    buffer = User2System(virtAddr, 255); // Copy buffer from User memory space to System memory space
+    buffer = User2System(virtAddr, 1024); // Copy buffer from User memory space to System memory space
 
     while (buffer[length] != 0) // Calculate the length of buffer
         length++;
@@ -275,8 +276,7 @@ void Handle_SC_PrintInt()
 {
     // SynchPrint("Integer that you entered: ");
     int number = machine->ReadRegister(4); // Read value from register 4 and store it in number
-    int *_number = &number;
-    SynchPrint(*_number); // Print number to console
+    SynchPrint(number);                    // Print number to console
     return IncreasePC();
 }
 
@@ -383,26 +383,35 @@ void Handle_SC_CreateFile()
     return IncreasePC();
 }
 
+/// @brief Handle system call Open from user program (Open file)
 void Handle_SC_Open()
 {
     int virtAddr = machine->ReadRegister(4);
     int type = machine->ReadRegister(5);
     char *filename;
-    filename = User2System(virtAddr, MaxFileLength);
 
+    filename = User2System(virtAddr, MaxFileLength);
+    // SynchPrint(filename);
     int freeSlot = fileSystem->FindFreeSlot();
+    // SynchPrint("Free slot: ");
+    // SynchPrint(freeSlot);
     if (freeSlot != -1)
     {
-        if (type == 0 || type == 1)
+        if (type == READ_WRITE || type == READ_ONLY)
         {
-
-            if ((fileSystem->openf[freeSlot] = fileSystem->Open(filename, type)) != NULL)
+            fileSystem->openf[freeSlot] = fileSystem->Open(filename, type);
+            if (fileSystem->openf[freeSlot] != NULL)
             {
-                SynchPrint("Open file success");
+                // SynchPrint("Open file success");
                 machine->WriteRegister(2, freeSlot);
             }
+            else // Open file failed
+            {
+                // SynchPrint("Open file failed");
+                machine->WriteRegister(2, -1); // Failed to open file, return -1
+            }
         }
-        else if (type == 2) // ConsoleInput: stdin
+        else if (type == STDIN) // ConsoleInput: stdin
         {
             machine->WriteRegister(2, 0);
         }
@@ -416,11 +425,12 @@ void Handle_SC_Open()
         SynchPrint("No free slot");
         machine->WriteRegister(2, -1); // Failed to open file, return -1
     }
-
-    delete[] filename;
+    if (filename != NULL)
+        delete[] filename;
     return IncreasePC();
 }
 
+/// @brief Handle system call Close from user program (Close file)
 void Handle_SC_Close()
 {
     int id = machine->ReadRegister(4);
@@ -429,13 +439,140 @@ void Handle_SC_Close()
         delete fileSystem->openf[id];
         fileSystem->openf[id] = NULL;
         machine->WriteRegister(2, 0);
-        SynchPrint("Close file success");
+        // SynchPrint("Close file success");
     }
     else
     {
         machine->WriteRegister(2, -1);
-        SynchPrint("Close file failed");
+        // SynchPrint("Close file failed");
     }
+    return IncreasePC();
+}
+
+/// @brief Handle system call SC_Read from user program
+void Handle_SC_Read()
+{
+    /* n. Read "size" bytes from the open file into "buffer".
+     * Return the number of bytes actually read -- if the open file isn't
+     * long enough, or if it is an I/O device, and there aren't enough
+     * characters to read, return whatever is available (for I/O devices,
+     * you should always wait until you can return at least one character).
+     */
+    // int Read(char *buffer, int size, OpenFileId id);
+
+    int virtAddr = machine->ReadRegister(4);  // Virtual address of buffer
+    int charcount = machine->ReadRegister(5); // Number of characters
+    int id = machine->ReadRegister(6);        // File descriptor
+    int OldPos;
+    int NewPos;
+    char *buf;                    // Kernel buffer
+    int result = -3;              // Value return for Read function
+    if (id < 0 || id >= MAX_FILE) // If file descriptor is out of range
+    {
+        SynchPrint("\nOut of range file descriptor.");
+        result = -1; // Failed to read file, return -1
+    }
+
+    else if (fileSystem->openf[id] == NULL) // If file is not exist
+    {
+        SynchPrint("\nCan't open file because file is not exist.");
+        result = -1; // Failed to read file, return -1
+    }
+
+    else if (fileSystem->openf[id]->type == STDOUT) // If file is stdout
+    {
+        SynchPrint("\nCan't open console output to read.");
+        result = -1; // Failed to read file, return -1
+    }
+    else // If file is exist
+    {
+        OldPos = fileSystem->openf[id]->GetCurrentPos(); // Get current position of file
+        buf = User2System(virtAddr, charcount);          // Convert buffer to system space
+        if (fileSystem->openf[id]->type == STDIN)        // If file is stdin
+        {
+            int size = gSynchConsole->Read(buf, charcount); // Read from console
+            System2User(virtAddr, size, buf);               // Copy buffer to user space
+            result = size;                                  // Write size to register 2, Success
+        }
+        else if ((fileSystem->openf[id]->Read(buf, charcount)) > 0) // If file is normal file
+        {
+            NewPos = fileSystem->openf[id]->GetCurrentPos(); // Actual number of bytes read
+            System2User(virtAddr, NewPos - OldPos, buf);     // Copy buffer to user space
+            result = NewPos - OldPos;                        // Write number of bytes read to register 2, Success
+        }
+        else // If file is empty
+        {
+            result = -2; // Write -2 to register 2, Success
+        }
+    }
+    if (result != -1 && result != -3) // If read file successfully
+    {
+        // SynchPrint("Read file success");
+    }
+    delete buf;
+    machine->WriteRegister(2, result); // Write result to register 2
+    return IncreasePC();
+}
+
+/// @brief Handle system call SC_Write from user program
+void Handle_SC_Write()
+{
+    /* n. Write "size" bytes from "buffer" to the open file. */
+    // int Write(char *buffer, int size, OpenFileId id);
+
+    int virtAddr = machine->ReadRegister(4);  // Virtual address of buffer
+    int charcount = machine->ReadRegister(5); // Number of characters
+    int id = machine->ReadRegister(6);        // File descriptor
+    int OldPos;
+    int NewPos;
+    char *buf;                   // Kernel buffer
+    int result = -3;             // Value return for Write function
+    if (id < 0 || id > MAX_FILE) // If file descriptor is out of range
+    {
+        SynchPrint("\nOut of range file descriptor.");
+        result = -1; // Failed to write file, return -1
+    }
+    else if (fileSystem->openf[id] == NULL) // If file is not exist
+    {
+        SynchPrint("\nCan't open file because file is not exist.");
+        result = -1; // Failed to write file, return -1
+    }
+    else if (fileSystem->openf[id]->type == READ_ONLY || fileSystem->openf[id]->type == STDIN) // If file is read only or stdin
+    {
+        SynchPrint("\nCan't write file because file is only read or stdin.");
+        result = -1; // Failed to write file, return -1
+    }
+    else // If file is exist
+    {
+        OldPos = fileSystem->openf[id]->GetCurrentPos(); // Get current position of file
+        buf = User2System(virtAddr, charcount);          // Convert buffer to system space
+        if (fileSystem->openf[id]->type == READ_WRITE)   // If file is read and write file
+        {
+            if ((fileSystem->openf[id]->Write(buf, charcount)) > 0) // Write to file
+            {
+                NewPos = fileSystem->openf[id]->GetCurrentPos();
+                result = NewPos - OldPos;
+            }
+        }
+        else if (fileSystem->openf[id]->type == STDOUT) // If file is stdout
+        {
+            int i = 0;
+            while (buf[i] != 0 && buf[i] != '\n') // Write buffer to console until the end of buffer or the end of line
+            {
+                gSynchConsole->Write(buf + i, 1); // Write 1 byte to console
+                i++;
+            }
+            buf[i] = '\n';
+            gSynchConsole->Write(buf + i, 1); // Write character '\n' to console
+            result = i - 1;
+        }
+    }
+    if (result != -1 && result != -3) // If write file successfully
+    {
+        // SynchPrint("Write file success");
+    }
+    delete buf;
+    machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }
 
@@ -476,6 +613,10 @@ void ExceptionHandler(ExceptionType which)
             return Handle_SC_Open();
         case SC_Close:
             return Handle_SC_Close();
+        case SC_Read:
+            return Handle_SC_Read();
+        case SC_Write:
+            return Handle_SC_Write();
         default:
             // printf("\nUnexpected user mode exception %d %d\n", which, type);
             printf("\n");

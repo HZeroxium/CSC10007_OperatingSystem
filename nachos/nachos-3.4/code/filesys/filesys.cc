@@ -146,14 +146,14 @@ FileSystem::FileSystem(bool format)
     }
 
     // Cai dat
-    openf = new OpenFile *[15];
+    openf = new OpenFile *[MAX_FILE];
     index = 0;
-    for (int i = 0; i < 15; ++i)
+    for (int i = 0; i < MAX_FILE; ++i)
     {
         openf[i] = NULL;
     }
-    openf[index++] = this->Open("stdin", 2);
-    openf[index++] = this->Open("stdout", 3);
+    openf[index++] = this->Open("stdin", STDIN);
+    openf[index++] = this->Open("stdout", STDOUT);
     this->Create("stdin", 0);
     this->Create("stdout", 0);
 }
@@ -261,6 +261,7 @@ OpenFile *FileSystem::Open(char *name)
 
 OpenFile *FileSystem::Open(char *name, int type)
 {
+    printf("Open file %s\n", name);
     int freeSlot = this->FindFreeSlot();
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;

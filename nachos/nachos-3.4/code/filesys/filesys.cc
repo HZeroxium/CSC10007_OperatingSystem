@@ -146,14 +146,14 @@ FileSystem::FileSystem(bool format)
     }
 
     // Cai dat
-    openf = new OpenFile *[MAX_FILE];
+    file_table = new OpenFile *[MAX_FILE];
     index = 0;
     for (int i = 0; i < MAX_FILE; ++i)
     {
-        openf[i] = NULL;
+        file_table[i] = NULL;
     }
-    openf[index++] = this->Open("stdin", STDIN);
-    openf[index++] = this->Open("stdout", STDOUT);
+    file_table[index++] = this->Open("stdin", STDIN);
+    file_table[index++] = this->Open("stdout", STDOUT);
     this->Create("stdin", 0);
     this->Create("stdout", 0);
 }
@@ -254,9 +254,9 @@ OpenFile *FileSystem::Open(char *name)
     if (sector >= 0)
         openFile = new OpenFile(sector); // name was found in directory
     delete directory;
-    // return openFile;				// return NULL if not found
+
     index++;
-    return openf[index - 1]; // return NULL if not found
+    return file_table[index - 1]; // return NULL if not found
 }
 
 OpenFile *FileSystem::Open(char *name, int type)
@@ -271,18 +271,17 @@ OpenFile *FileSystem::Open(char *name, int type)
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name);
     if (sector >= 0)
-        openf[freeSlot] = new OpenFile(sector, type); // name was found in directory
+        file_table[freeSlot] = new OpenFile(sector, type); // name was found in directory
     delete directory;
-    // index++;
-    return openf[freeSlot]; // return NULL if not found
+
+    return file_table[freeSlot]; // return NULL if not found
 }
 
-// Ham tim slot trong
 int FileSystem::FindFreeSlot()
 {
     for (int i = 2; i < 15; i++)
     {
-        if (openf[i] == NULL)
+        if (file_table[i] == NULL)
             return i;
     }
     return -1;

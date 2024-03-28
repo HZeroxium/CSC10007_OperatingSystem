@@ -23,13 +23,18 @@
 #include "copyright.h"
 #include "utility.h"
 
+#define READ_WRITE 0
+#define READ_ONLY 1
+#define STDIN 2
+#define STDOUT 3
+
 #ifdef FILESYS_STUB // Temporarily implement calls to
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else
 class OpenFile
 {
 public:
-	int type;
+	int type; // Open mode
 
 	OpenFile(int f)
 	{

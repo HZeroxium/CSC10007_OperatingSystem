@@ -51,50 +51,41 @@
  * from the system call entry point in exception.cc.
  */
 
-/* Stop Nachos, and print out performance stats */
+/// @brief Stop Nachos, and print out performance stats
 void Halt();
 
-// d.
+/// @brief Read an integer from the console input and write it to register 2
+/// @return Integer read from the console input
 int ReadInt();
 
-// e.
+/// @brief Print an integer to the console output
+/// @param number Integer is stored in register 4
 void PrintInt(int number);
 
-// f.
+/// @brief Read a float from the console input
+/// @return
 float ReadFloat();
 
-// g.
+/// @brief Print a float to the console output
+/// @param number
 void PrintFloat(float number);
 
-// h.
+/// @brief Read a character from the console input and write it to register 2
+/// @return Character read from the console input
 char ReadChar();
 
-// i.
+/// @brief Write a character to the console output
+/// @param character Character is stored in register 4
 void PrintChar(char character);
 
-// j.
+/// @brief Read a string from the console input
+/// @param buffer Buffer to store the string (Stored in register 4)
+/// @param size Size of the buffer (Length of the string) (Stored in register 5)
 void ReadString(char *buffer, int size);
 
-// k.
+/// @brief Write a string to the console output
+/// @param buffer Buffer contains the string (Stored in register 4)
 void PrintString(char *buffer);
-
-/* Address space control operations: Exit, Exec, and Join */
-
-/* This user program is done (status = 0 means exited normally). */
-void Exit(int status);
-
-/* A unique identifier for an executing user program (address space) */
-typedef int SpaceId;
-
-/* Run the executable, stored in the Nachos file "name", and return the
- * address space identifier
- */
-SpaceId Exec(char *name);
-
-/* Only return once the the user program "id" has finished.
- * Return the exit status.
- */
-int Join(SpaceId id);
 
 /* File system operations: Create, Open, Read, Write, Close
  * These functions are patterned after UNIX -- files represent
@@ -117,31 +108,63 @@ typedef int OpenFileId;
 #define ConsoleInput 0
 #define ConsoleOutput 1
 
-// l. Create a Nachos file, with "name"
+/// @brief Create a new file with the given name
+/// @param name Name of the file (Stored in register 4)
+/// @return 0 if the file is created successfully, -1 otherwise
 int CreateFile(char *name);
 
-/* m. Open the Nachos file "name", and return an "OpenFileId" that can
- * be used to read and write to the file.
- */
+/// @brief Open the file with the given name and open mode
+/// @param name Name of the file in ./code directory (Stored in register 4)
+/// @param type Type of the file (0: Read/Write, 1: Read only, 2: Console Input, 3: Console Output) (Stored in register 5)
+/// @return OpenFileId of the opened file (a slot in file table)
+/// @note + Return -1 if the file is not found or the file is already opened
+/// @note + Return -2 if unknown error occurs
 OpenFileId Open(char *name, int type);
 
-/* Close the file, we're done reading and writing to it. */
+/// @brief Close the file with the given OpenFileId
+/// @param id OpenFileId of the file to be closed (Stored in register 4)
 void Close(OpenFileId id);
 
-/* n. Read "size" bytes from the open file into "buffer".
- * Return the number of bytes actually read -- if the open file isn't
- * long enough, or if it is an I/O device, and there aren't enough
- * characters to read, return whatever is available (for I/O devices,
- * you should always wait until you can return at least one character).
- */
+/// @brief Read data from the file and store it in the buffer
+/// @param buffer Buffer to store the read data (Stored in register 4)
+/// @param size Size of the data to be read - Number of bytes (Stored in register 5)
+/// @param id OpenFileId of the file to be read (Stored in register 6)
+/// @return Number of bytes actually read
+/// @note + Return -1 if the file is not found or id is out of range or the file is not opened in read mode (stdout)
+/// @note + Return -2 if the file is empty (EOF)
+/// @note + Return -3 if unknown error occurs
 int Read(char *buffer, int size, OpenFileId id);
 
-/* n. Write "size" bytes from "buffer" to the open file. */
+/// @brief Write data from the buffer to the file
+/// @param buffer Buffer containing the data to be written (Stored in register 4)
+/// @param size Size of the data to be written - Number of bytes (Stored in register 5)
+/// @param id OpenFileId of the file to be written (Stored in register 6)
+/// @return Number of bytes actually written
+/// @note + Return -1 if the file is not found or id is out of range or the file is not opened in write mode (stdin)
+/// @note + Return -3 if unknown error occurs
 int Write(char *buffer, int size, OpenFileId id);
 
 //==================================================================================================
 //==================================================================================================
 //==================================================================================================
+
+/* Address space control operations: Exit, Exec, and Join */
+
+/* This user program is done (status = 0 means exited normally). */
+void Exit(int status);
+
+/* A unique identifier for an executing user program (address space) */
+typedef int SpaceId;
+
+/* Run the executable, stored in the Nachos file "name", and return the
+ * address space identifier
+ */
+SpaceId Exec(char *name);
+
+/* Only return once the the user program "id" has finished.
+ * Return the exit status.
+ */
+int Join(SpaceId id);
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program.

@@ -36,7 +36,7 @@ INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
 # ---------------------------------------------------------------------------------------
-all: halt shell matmult sort create_file char_io_test string_io_test int_io_test float_io_test
+all: halt char_io_test string_io_test int_io_test float_io_test help ascii quicksort mergesort
 # ---------------------------------------------------------------------------------------
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -48,30 +48,6 @@ halt.o: halt.c
 halt: halt.o start.o
 	$(LD) $(LDFLAGS) start.o halt.o -o halt.coff
 	../bin/coff2noff halt.coff halt
-# ---------------------------------------------------------------------------------------
-shell.o: shell.c
-	$(CC) $(CFLAGS) -c shell.c
-shell: shell.o start.o
-	$(LD) $(LDFLAGS) start.o shell.o -o shell.coff
-	../bin/coff2noff shell.coff shell
-# ---------------------------------------------------------------------------------------
-sort.o: sort.c
-	$(CC) $(CFLAGS) -c sort.c
-sort: sort.o start.o
-	$(LD) $(LDFLAGS) start.o sort.o -o sort.coff
-	../bin/coff2noff sort.coff sort
-# ---------------------------------------------------------------------------------------
-matmult.o: matmult.c
-	$(CC) $(CFLAGS) -c matmult.c
-matmult: matmult.o start.o
-	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
-	../bin/coff2noff matmult.coff matmult
-# ---------------------------------------------------------------------------------------
-create_file.o: create_file.c
-	$(CC) $(CFLAGS) -c create_file.c
-create_file: create_file.o start.o
-	$(LD) $(LDFLAGS) start.o create_file.o -o create_file.coff
-	../bin/coff2noff create_file.coff create_file
 # ---------------------------------------------------------------------------------------
 char_io_test.o: char_io_test.c
 	$(CC) $(CFLAGS) -c char_io_test.c
@@ -96,4 +72,27 @@ float_io_test.o: float_io_test.c
 float_io_test: float_io_test.o start.o
 	$(LD) $(LDFLAGS) start.o float_io_test.o -o float_io_test.coff
 	../bin/coff2noff float_io_test.coff float_io_test
-
+# ---------------------------------------------------------------------------------------
+help.o: help.c
+	$(CC) $(CFLAGS) -c help.c
+help: help.o start.o
+	$(LD) $(LDFLAGS) start.o help.o -o help.coff
+	../bin/coff2noff help.coff help
+# ---------------------------------------------------------------------------------------
+ascii.o: ascii.c
+	$(CC) $(CFLAGS) -c ascii.c
+ascii: ascii.o start.o
+	$(LD) $(LDFLAGS) start.o ascii.o -o ascii.coff
+	../bin/coff2noff ascii.coff ascii
+# ---------------------------------------------------------------------------------------
+quicksort.o: quicksort.c
+	$(CC) $(CFLAGS) -c quicksort.c
+quicksort: quicksort.o start.o
+	$(LD) $(LDFLAGS) start.o quicksort.o -o quicksort.coff
+	../bin/coff2noff quicksort.coff quicksort
+# ---------------------------------------------------------------------------------------
+mergesort.o: mergesort.c
+	$(CC) $(CFLAGS) -c mergesort.c
+mergesort: mergesort.o start.o
+	$(LD) $(LDFLAGS) start.o mergesort.o -o mergesort.coff
+	../bin/coff2noff mergesort.coff mergesort

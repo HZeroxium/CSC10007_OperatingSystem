@@ -383,9 +383,9 @@ void Handle_SC_Open()
     {
         if (type == READ_WRITE || type == READ_ONLY) // Handle ReadOnly and ReadWrite file cases
         {
-            fileSystem->openf[freeSlot] = fileSystem->Open(filename, type); // Open file with filename and type
+            fileSystem->file_table[freeSlot] = fileSystem->Open(filename, type); // Open file with filename and type
 
-            if (fileSystem->openf[freeSlot] != NULL)
+            if (fileSystem->file_table[freeSlot] != NULL)
             {
                 result = freeSlot; // Success, return free slot for normal file
             }
@@ -421,11 +421,11 @@ void Handle_SC_Close()
     int id = machine->ReadRegister(4); // Read file descriptor (OpenFileId) PARAMETER from register 4
     int result = -2;                   // Result of the function
 
-    if (id >= 0 && id < MAX_FILE && fileSystem->openf[id] != NULL) // If file descriptor is in range and file is exist
+    if (id >= 0 && id < MAX_FILE && fileSystem->file_table[id] != NULL) // If file descriptor is in range and file is exist
     {
-        delete fileSystem->openf[id]; // Delete file
-        fileSystem->openf[id] = NULL; // Set file to NULL
-        result = 0;                   // Success, return 0
+        delete fileSystem->file_table[id]; // Delete file
+        fileSystem->file_table[id] = NULL; // Set file to NULL
+        result = 0;                        // Success, return 0
     }
     else // If file descriptor is out of range or file is not exist
     {
@@ -453,32 +453,32 @@ void Handle_SC_Read()
         result = -1; // Failed to read file, return -1
     }
 
-    else if (fileSystem->openf[id] == NULL) // If file is not exist
+    else if (fileSystem->file_table[id] == NULL) // If file is not exist
     {
         SynchPrint("\nCan't open file because file is not exist.");
         result = -1; // Failed to read file, return -1
     }
 
-    else if (fileSystem->openf[id]->type == STDOUT) // If file is stdout
+    else if (fileSystem->file_table[id]->type == STDOUT) // If file is stdout
     {
         SynchPrint("\nCan't open console output to read.");
         result = -1; // Failed to read file, return -1
     }
     else // If file is exist
     {
-        OldPos = fileSystem->openf[id]->GetCurrentPos(); // Get current position of file
-        buf = User2System(virtAddr, charcount);          // Convert buffer to system space
-        if (fileSystem->openf[id]->type == STDIN)        // If file is stdin
+        OldPos = fileSystem->file_table[id]->GetCurrentPos(); // Get current position of file
+        buf = User2System(virtAddr, charcount);               // Convert buffer to system space
+        if (fileSystem->file_table[id]->type == STDIN)        // If file is stdin
         {
             int size = gSynchConsole->Read(buf, charcount); // Read from console
             System2User(virtAddr, size, buf);               // Copy buffer to user space
             result = size;                                  // Write size to register 2, Success
         }
-        else if ((fileSystem->openf[id]->Read(buf, charcount)) > 0) // If file is normal file
+        else if ((fileSystem->file_table[id]->Read(buf, charcount)) > 0) // If file is normal file
         {
-            NewPos = fileSystem->openf[id]->GetCurrentPos(); // Actual number of bytes read
-            System2User(virtAddr, NewPos - OldPos, buf);     // Copy buffer to user space
-            result = NewPos - OldPos;                        // Write number of bytes read to register 2, Success
+            NewPos = fileSystem->file_table[id]->GetCurrentPos(); // Actual number of bytes read
+            System2User(virtAddr, NewPos - OldPos, buf);          // Copy buffer to user space
+            result = NewPos - OldPos;                             // Write number of bytes read to register 2, Success
         }
         else // If file is empty
         {
@@ -510,29 +510,29 @@ void Handle_SC_Write()
         SynchPrint("\nOut of range file descriptor.");
         result = -1; // Failed to write file, return -1
     }
-    else if (fileSystem->openf[id] == NULL) // If file is not exist
+    else if (fileSystem->file_table[id] == NULL) // If file is not exist
     {
         SynchPrint("\nCan't open file because file is not exist.");
         result = -1; // Failed to write file, return -1
     }
-    else if (fileSystem->openf[id]->type == READ_ONLY || fileSystem->openf[id]->type == STDIN) // If file is read only or stdin
+    else if (fileSystem->file_table[id]->type == READ_ONLY || fileSystem->file_table[id]->type == STDIN) // If file is read only or stdin
     {
         SynchPrint("\nCan't write file because file is only read or stdin.");
         result = -1; // Failed to write file, return -1
     }
     else // If file is exist
     {
-        OldPos = fileSystem->openf[id]->GetCurrentPos(); // Get current position of file
-        buf = User2System(virtAddr, charcount);          // Convert buffer to system space
-        if (fileSystem->openf[id]->type == READ_WRITE)   // If file is read and write file
+        OldPos = fileSystem->file_table[id]->GetCurrentPos(); // Get current position of file
+        buf = User2System(virtAddr, charcount);               // Convert buffer to system space
+        if (fileSystem->file_table[id]->type == READ_WRITE)   // If file is read and write file
         {
-            if ((fileSystem->openf[id]->Write(buf, charcount)) > 0) // Write to file
+            if ((fileSystem->file_table[id]->Write(buf, charcount)) > 0) // Write to file
             {
-                NewPos = fileSystem->openf[id]->GetCurrentPos();
+                NewPos = fileSystem->file_table[id]->GetCurrentPos();
                 result = NewPos - OldPos;
             }
         }
-        else if (fileSystem->openf[id]->type == STDOUT) // If file is stdout
+        else if (fileSystem->file_table[id]->type == STDOUT) // If file is stdout
         {
             int i = 0;
             while (buf[i] != 0 && buf[i] != '\n') // Write buffer to console until the end of buffer or the end of line

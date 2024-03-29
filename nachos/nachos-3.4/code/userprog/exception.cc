@@ -198,11 +198,14 @@ void Handle_SC_ReadString()
     int length;          // Length of input string
     char *buffer = NULL; // Buffer to store input string
 
-    virtAddr = machine->ReadRegister(4);    // Read virtual address of input string PARAMETER from register 4
-    length = machine->ReadRegister(5);      // Read maximum length of input string PARAMETER from register 5
+    virtAddr = machine->ReadRegister(4); // Read virtual address of input string PARAMETER from register 4
+    length = machine->ReadRegister(5);   // Read maximum length of input string PARAMETER from register 5
+
     buffer = User2System(virtAddr, length); // Copy buffer from User memory space to System memory space
-    gSynchConsole->Read(buffer, length);    // Use SynchConsole to read buffer from console
-    System2User(virtAddr, length, buffer);  // Copy buffer from System memory space to User memory space
+
+    gSynchConsole->Read(buffer, length); // Use SynchConsole to read buffer from console
+
+    System2User(virtAddr, length, buffer); // Copy buffer from System memory space to User memory space
 
     delete buffer;
     return IncreasePC();
@@ -377,17 +380,17 @@ void Handle_SC_Open()
 
     filename = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
 
-    int freeSlot = fileSystem->FindFreeSlot(); // Find free slot in file system
+    int allocatedSlot = fileSystem->GetAllocatedSlot(); // Find free slot in file system
 
-    if (freeSlot != -1) // If there is free slot
+    if (allocatedSlot != -1) // If there is free slot
     {
         if (type == READ_WRITE || type == READ_ONLY) // Handle ReadOnly and ReadWrite file cases
         {
-            fileSystem->file_table[freeSlot] = fileSystem->Open(filename, type); // Open file with filename and type
+            fileSystem->file_table[allocatedSlot] = fileSystem->Open(filename, type); // Open file with filename and type
 
-            if (fileSystem->file_table[freeSlot] != NULL)
+            if (fileSystem->file_table[allocatedSlot] != NULL)
             {
-                result = freeSlot; // Success, return free slot for normal file
+                result = allocatedSlot; // Success, return free slot for normal file
             }
             else // Open file failed
             {
@@ -408,6 +411,7 @@ void Handle_SC_Open()
         SynchPrint("No free slot");
         result = -1; // Failed to open file, return -1
     }
+
     if (filename != NULL)
         delete[] filename;
 
@@ -572,10 +576,10 @@ void ExceptionHandler(ExceptionType which)
         case SC_PrintInt:
             return Handle_SC_PrintInt();
         case SC_ReadFloat:
-            SynchPrint("ReadFloat\n");
+            // SynchPrint("ReadFloat\n");
             return Handle_SC_ReadFloat();
         case SC_PrintFloat:
-            SynchPrint("PrintFloat\n");
+            // SynchPrint("PrintFloat\n");
             return Handle_SC_PrintFloat();
         case SC_ReadChar:
             return Handle_SC_ReadChar();

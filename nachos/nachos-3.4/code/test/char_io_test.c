@@ -22,7 +22,6 @@ int main()
     case NULL:
         PrintString("NULL\n");
         break;
-        break;
     case ESC:
         PrintString("ESC\n");
         break;

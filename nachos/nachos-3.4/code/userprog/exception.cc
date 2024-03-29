@@ -243,22 +243,60 @@ void Handle_SC_ReadInt()
     if (len != 0) // If nothing is read, return 0
     {
         // Process the number buffer to get the result
+        bool isNumber = true;
         bool isNegative = (_numberBuffer[0] == '-');
-
+        // SynchPrint("Number that you entered: ");
+        // SynchPrint(_numberBuffer);
         for (int i = isNegative; i < len; ++i)
         {
             char c = _numberBuffer[i];
             if (c < '0' || c > '9')
             {
                 DEBUG('a', "Expected number but %s found\n", _numberBuffer);
-                return;
+                SynchPrint("Expected number but ");
+                SynchPrint(_numberBuffer);
+                SynchPrint(" found\n");
+                isNumber = false;
+                break;
             }
-            result = result * 10 + (c - '0');
-        }
-        if (isNegative)
-            result = -result;
-    }
 
+            int limit = 2147483647 + isNegative;
+            if (result > limit / 10)
+            {
+                SynchPrint("Number is out of range\n");
+                result = 0;
+                break;
+            }
+            else
+            {
+                result *= 10;
+            }
+
+            int v = c - '0';
+            if (result > limit - v)
+            {
+                SynchPrint("Number is out of range");
+                result = 0;
+                break;
+            }
+            else
+            {
+                result += v;
+            }
+        }
+
+        if (isNegative)
+        {
+            result = -result;
+        }
+
+        bool isOutOfRange = (result < int(-2147483648)) || (result > 2147483647);
+        if (isNumber && isOutOfRange)
+        {
+            SynchPrint("Number is out of range\n");
+            result = 0;
+        }
+    }
     machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }

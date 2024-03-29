@@ -20,13 +20,13 @@
 #ifndef OPENFILE_H
 #define OPENFILE_H
 
-#include "copyright.h"
-#include "utility.h"
-
 #define READ_WRITE 0
 #define READ_ONLY 1
 #define STDIN 2
 #define STDOUT 3
+
+#include "copyright.h"
+#include "utility.h"
 
 #ifdef FILESYS_STUB // Temporarily implement calls to
 					// Nachos file system as calls to UNIX!
@@ -112,10 +112,10 @@ class FileHeader;
 class OpenFile
 {
 public:
-	int type;
-
-	OpenFile(int sector); // Open a file whose header is located
-						  // at "sector" on the disk
+	int type; // Open mode
+	// Open a file whose header is located at "sector" on the disk
+	OpenFile(int sector);
+	// Open a file with a specific type
 	OpenFile(int sector, int type);
 
 	~OpenFile(); // Close the file

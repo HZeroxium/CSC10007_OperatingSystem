@@ -243,7 +243,7 @@ bool FileSystem::Create(char *name, int initialSize)
 //----------------------------------------------------------------------
 OpenFile *FileSystem::Open(char *name)
 {
-    // int freeSlot = this->FindFreeSlot();
+    // int freeSlot = this->GetAllocatedSlot();
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
@@ -262,7 +262,7 @@ OpenFile *FileSystem::Open(char *name)
 OpenFile *FileSystem::Open(char *name, int type)
 {
     printf("Open file %s\n", name);
-    int freeSlot = this->FindFreeSlot();
+    int freeSlot = this->GetAllocatedSlot();
     Directory *directory = new Directory(NumDirEntries);
     OpenFile *openFile = NULL;
     int sector;
@@ -277,7 +277,7 @@ OpenFile *FileSystem::Open(char *name, int type)
     return file_table[freeSlot]; // return NULL if not found
 }
 
-int FileSystem::FindFreeSlot()
+int FileSystem::GetAllocatedSlot()
 {
     for (int i = 2; i < 15; i++)
     {

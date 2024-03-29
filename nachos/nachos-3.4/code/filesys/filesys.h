@@ -75,7 +75,6 @@ public:
 		delete[] file_table;
 	}
 
-	// Default method
 	bool Create(char *name, int initialSize)
 	{
 		int fileDescriptor = OpenForWrite(name);
@@ -86,7 +85,6 @@ public:
 		return TRUE;
 	}
 
-	// Default method
 	OpenFile *Open(char *name)
 	{
 		int fileDescriptor = OpenForReadWrite(name, FALSE);
@@ -108,7 +106,7 @@ public:
 		return new OpenFile(fileDescriptor, type);
 	}
 
-	int FindFreeSlot()
+	int GetAllocatedSlot()
 	{
 		for (int i = 2; i < 15; i++)
 		{
@@ -138,12 +136,19 @@ public:
 							 // the disk, so initialize the directory
 							 // and the bitmap of free blocks.
 
+	/// @brief Create a new file with the given name and initial size
 	bool Create(char *name, int initialSize);
-	// Create a file (UNIX creat)
 
-	OpenFile *Open(char *name);			  // Open a file (UNIX open)
-	OpenFile *Open(char *name, int type); // Open a file with type
-	int FindFreeSlot();
+	/// @brief Open the file with the given name
+	/// @param name Name of the file in ./code directory
+	/// @return OpenFile pointer of the opened file
+	OpenFile *Open(char *name);
+	/// @brief Open the file with the given name and open mode
+	/// @param name Name of the file in ./code directory
+	/// @param type Type of the file (0: Read/Write, 1: Read only, 2: Console Input, 3: Console Output)
+	/// @return OpenFile pointer of the opened file
+	OpenFile *Open(char *name, int type);
+	int GetAllocatedSlot();
 
 	bool Remove(char *name); // Delete a file (UNIX unlink)
 

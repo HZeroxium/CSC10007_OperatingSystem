@@ -9,7 +9,9 @@ int main()
 
     PrintString("Enter an integer: ");
     number = ReadInt();
-    PrintString("You entered: ");
+    PrintString("-> Integer that you entered: ");
     PrintInt(number);
     PrintChar('\n');
+
+    PrintString("Exiting Int I/O Test Suite\n\n");
 }

@@ -16,7 +16,7 @@ int main()
 
     PrintString("Enter a character: ");
     c = ReadChar();
-    PrintString("You entered: ");
+    PrintString("-> You entered: ");
     switch (c)
     {
     case NULL:
@@ -36,4 +36,6 @@ int main()
         break;
     }
     PrintChar('\n');
+
+    PrintString("Exiting Char I/O Test Suite\n\n");
 }

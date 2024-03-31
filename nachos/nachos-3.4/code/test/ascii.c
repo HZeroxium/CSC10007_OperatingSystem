@@ -3,8 +3,9 @@
 int main()
 {
     int openFileId; // File descriptor for the file to be written
-    int i = 0;      // Loop variable
-    char *buffer = "0,NULL\
+    int result = 0; // Result of the write operation
+    char *buffer = "Decimal,Char\
+0,NULL\
 1,SOH\
 2,STX\
 3,ETX\
@@ -133,18 +134,47 @@ int main()
 126,~\
 127,DEL";           // Buffer to store the content to be written to the file
 
-    openFileId = Open("ascii.txt", 0); // Open "ascii.txt" file in write mode
+    PrintString("*====================================================*\n");
+    PrintString("|   Welcome to the ASCII Table program in Nachos!    |\n");
+    PrintString("*====================================================*\n");
+
+    PrintChar('\n');
+
+    openFileId = Open("ascii.csv", 0); // Open "ascii.txt" file in write mode
     if (openFileId != -1)              // If file opened successfully
     {
-        PrintString(buffer);                        // Print the content to console output
-        Write(buffer, 843, openFileId);             // Write the content to the file
-        Close(openFileId);                          // Close the file
-        PrintString("File written successfully\n"); // Print success message
-        return 0;
+        PrintString(buffer);                     // Print the content to console output
+        result = Write(buffer, 857, openFileId); // Write the content to the file
+        if (result == -1)
+        {
+            PrintString("!!!ERROR: File is not found or id is out of range or the file is not opened in write mode (stdin)\n");
+        }
+        else if (result == -2)
+        {
+            PrintString("!!!ERROR: No space left on the disk\n");
+        }
+        else if (result == -3)
+        {
+            PrintString("!!!ERROR: Unknown error occurs\n");
+        }
+        else
+        {
+            PrintString("\n\nWrite content to file ascii.txt successfully\n"); // Print success message
+        }
+        Close(openFileId); // Close the file
     }
     else // If file open failed
     {
         PrintString("Can't open file\n"); // Print error message
-        return 1;
     }
+
+    PrintChar('\n');
+
+    PrintString("*=============================================*\n");
+    PrintString("| Thank you for using this program in Nachos! |\n");
+    PrintString("*=============================================*\n");
+
+    PrintChar('\n');
+
+    return 0;
 }

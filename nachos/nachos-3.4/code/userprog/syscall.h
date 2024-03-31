@@ -38,6 +38,9 @@
 #define SC_PrintChar 46
 #define SC_ReadString 47
 #define SC_PrintString 48
+#define SC_CompareFloat 49
+#define SC_FreeFloat 50
+#define SC_FloatToString 51
 
 #ifndef IN_ASM
 
@@ -63,12 +66,12 @@ int ReadInt();
 void PrintInt(int number);
 
 /// @brief Read a float from the console input
-/// @return
-float ReadFloat();
+/// @return Pointer to the float read from the console input
+float *ReadFloat();
 
 /// @brief Print a float to the console output
-/// @param number
-void PrintFloat(float number);
+/// @param number Pointer to the float is stored in register 4
+void PrintFloat(float *number);
 
 /// @brief Read a character from the console input and write it to register 2
 /// @return Character read from the console input
@@ -87,6 +90,21 @@ void ReadString(char *buffer, int size);
 /// @param buffer Buffer contains the string (Stored in register 4)
 void PrintString(char *buffer);
 
+/// @brief Compare two floats
+/// @param a Pointer to the first float (Stored in register 4)
+/// @param b Pointer to the second float (Stored in register 5)
+/// @return 0 if the two floats are equal, -1 if the first float is less than the second float, 1 otherwise
+int CompareFloat(float *a, float *b);
+
+/// @brief Convert a float to a string
+/// @param number Pointer to the float (Stored in register 4)
+/// @return Pointer to the string representation of the float
+void FloatToString(float *number, char *buffer);
+
+/// @brief Deallocate the memory of a float
+/// @param a Pointer to the float (Stored in register 4)
+/// @return 0 if the float is deallocated successfully, -1 otherwise
+int FreeFloat(float *a);
 /* File system operations: Create, Open, Read, Write, Close
  * These functions are patterned after UNIX -- files represent
  * both files *and* hardware I/O devices.

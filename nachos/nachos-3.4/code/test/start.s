@@ -197,6 +197,30 @@ PrintFloat:
 	syscall
 	j	$31
 	.end PrintFloat
+
+	.globl CompareFloat
+	.ent	CompareFloat
+CompareFloat:
+	addiu $2,$0,SC_CompareFloat
+	syscall
+	j	$31
+	.end CompareFloat
+
+	.globl FreeFloat
+	.ent	FreeFloat
+FreeFloat:
+	addiu $2,$0,SC_FreeFloat
+	syscall
+	j	$31
+	.end FreeFloat
+
+	.globl FloatToString
+	.ent	FloatToString
+FloatToString:
+	addiu $2,$0,SC_FloatToString
+	syscall
+	j	$31
+	.end FloatToString
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

@@ -46,10 +46,27 @@ void SynchPrint(int number)
     SynchPrint(buffer);
 }
 
+/// @brief Print float number to console instantly
+/// @param number Float number to print
 void SynchPrint(float number)
 {
     char buffer[MaxFileLength];
     sprintf(buffer, "%f", number);
+    // Round to 2 decimal places
+
+    for (int i = 0; i < strlen(buffer); i++)
+    {
+        if (buffer[i] == '.')
+        {
+            if (buffer[i + 3] >= '5')
+            {
+                buffer[i + 2]++;
+            }
+            buffer[i + 3] = '\0';
+            break;
+        }
+    }
+
     SynchPrint(buffer);
 }
 
@@ -110,6 +127,7 @@ int System2User(int virtAddr, int len, char *buffer)
     } while (i < len && oneChar != 0);
     return i;
 }
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -234,13 +252,18 @@ void Handle_SC_PrintString()
 /// @brief Handle system call ReadInt from user program
 void Handle_SC_ReadInt()
 {
+    int limit;
     int result = 0;                                  // Store the result
     char _numberBuffer[MAX_NUM_LENGTH + 2];          // Buffer to store number buffer
     memset(_numberBuffer, 0, sizeof(_numberBuffer)); // Fill buffer with 0
 
     int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1); // Read buffer from console
 
-    if (len != 0) // If nothing is read, return 0
+    if (strcmp(_numberBuffer, "-2147483648") == 0)
+    {
+        result = -2147483648;
+    }
+    else if (len != 0) // If nothing is read, return 0
     {
         // Process the number buffer to get the result
         bool isNumber = true;
@@ -260,7 +283,7 @@ void Handle_SC_ReadInt()
                 break;
             }
 
-            int limit = 2147483647 + isNegative;
+            limit = 2147483647;
             if (result > limit / 10)
             {
                 SynchPrint("Number is out of range\n");
@@ -275,7 +298,7 @@ void Handle_SC_ReadInt()
             int v = c - '0';
             if (result > limit - v)
             {
-                SynchPrint("Number is out of range");
+                SynchPrint("Number is out of range\n");
                 result = 0;
                 break;
             }
@@ -312,65 +335,87 @@ void Handle_SC_PrintInt()
 /// @brief Handle system call ReadFloat from user program
 void Handle_SC_ReadFloat()
 {
-    SynchPrint("Enter a float: ");
-    int result = 0;
-    char _numberBuffer[MAX_NUM_LENGTH + 2];
-    memset(_numberBuffer, 0, sizeof(_numberBuffer));
+    float *result;
+    char buffer[MAX_NUM_LENGTH + 2];
+    memset(buffer, 0, sizeof(buffer));
+    int len = gSynchConsole->Read(buffer, MAX_NUM_LENGTH + 1);
 
-    int len = gSynchConsole->Read(_numberBuffer, MAX_NUM_LENGTH + 1);
-    // Read nothing -> return 0
-    if (len == 0)
-        return;
-    // Check comment below to understand this line of code
-    bool isNegative = (_numberBuffer[0] == '-');
-    int i = isNegative;
-    for (i; i < len; ++i)
+    if (len != 0)
     {
-        char c = _numberBuffer[i];
-        if (c == '.')
+        bool isFloat = true;
+        bool isNegative = (buffer[0] == '-');
+        for (int i = isNegative; i < len; ++i)
         {
-            break;
+            char c = buffer[i];
+            if (c != '.' && (c < '0' || c > '9'))
+            {
+                DEBUG('a', "Expected float but %s found\n", buffer);
+                SynchPrint("Expected float but ");
+                SynchPrint(buffer);
+                SynchPrint(" found\n");
+                isFloat = false;
+                break;
+            }
         }
-        else if (c < '0' || c > '9')
+
+        if (isFloat)
         {
-            DEBUG('a', "Expected number but %s found\n", _numberBuffer);
-            return;
+            result = new float;
+            *result = atof(buffer);
         }
-        result = result * 10 + (c - '0');
     }
 
-    int decimal = 0;
-    int count = 0;
-    for (i = i + 1; i < len; ++i)
-    {
-        char c = _numberBuffer[i];
-        if (c < '0' || c > '9')
-        {
-            DEBUG('a', "Expected number but %s found\n", _numberBuffer);
-            return;
-        }
-        decimal = decimal * 10 + (c - '0');
-        count++;
-    }
-    if (isNegative)
-        result = -result;
-    machine->WriteRegister(2, result);
-    SynchPrint("Float that you entered: ");
-    SynchPrint(result);
-    SynchPrint(".");
-    SynchPrint(decimal);
+    machine->WriteRegister(2, (int)result);
     return IncreasePC();
 }
 
 /// @brief Handle system call PrintFloat from user program
 void Handle_SC_PrintFloat()
 {
-    SynchPrint("Float that you entered: ");
-    int number = machine->ReadRegister(4);
-    float *f = (float *)number;
-    SynchPrint(*f);
-    SynchPrint(".");
-    // SynchPrint(decimal);
+    float *number = (float *)machine->ReadRegister(4); // Read value of number PARAMETER from register 4
+    // Round to 2 decimal places
+    *number = (int)(*number * 100 + 0.5) / 100.0;
+    SynchPrint(*number); // Print number to console
+    return IncreasePC();
+}
+
+/// @brief Handle system call CompareFloat from user program
+void Handle_SC_CompareFloat()
+{
+    float *a = (float *)machine->ReadRegister(4);
+    float *b = (float *)machine->ReadRegister(5);
+    int result = 0;
+    if (*a > *b)
+    {
+        result = 1;
+    }
+    else if (*a < *b)
+    {
+        result = -1;
+    }
+    machine->WriteRegister(2, result);
+    return IncreasePC();
+}
+
+/// @brief Handle system call FreeFloat from user program
+void Handle_SC_FreeFloat()
+{
+    float *number = (float *)machine->ReadRegister(4);
+    if (number != NULL)
+        delete number;
+    return IncreasePC();
+}
+
+/// @brief Handle system call FloatToString from user program
+void Handle_SC_FloatToString()
+{
+    float *number = (float *)machine->ReadRegister(4);
+    int virtAddr = machine->ReadRegister(5);
+    char *buffer = new char[MAX_NUM_LENGTH + 2];
+    memset(buffer, 0, sizeof(buffer));
+    sprintf(buffer, "%f", *number);
+    System2User(virtAddr, MAX_NUM_LENGTH + 2, buffer);
+    delete buffer;
     return IncreasePC();
 }
 
@@ -614,10 +659,8 @@ void ExceptionHandler(ExceptionType which)
         case SC_PrintInt:
             return Handle_SC_PrintInt();
         case SC_ReadFloat:
-            // SynchPrint("ReadFloat\n");
             return Handle_SC_ReadFloat();
         case SC_PrintFloat:
-            // SynchPrint("PrintFloat\n");
             return Handle_SC_PrintFloat();
         case SC_ReadChar:
             return Handle_SC_ReadChar();
@@ -637,6 +680,12 @@ void ExceptionHandler(ExceptionType which)
             return Handle_SC_Read();
         case SC_Write:
             return Handle_SC_Write();
+        case SC_CompareFloat:
+            return Handle_SC_CompareFloat();
+        case SC_FreeFloat:
+            return Handle_SC_FreeFloat();
+        case SC_FloatToString:
+            return Handle_SC_FloatToString();
         default:
             interrupt->Halt();
             break;

@@ -12,4 +12,6 @@ int main()
     PrintString("The string you entered is: ");
     PrintString(buffer);
     PrintChar('\n');
+
+    PrintString("Exiting String I/O Test Suite\n\n");
 }

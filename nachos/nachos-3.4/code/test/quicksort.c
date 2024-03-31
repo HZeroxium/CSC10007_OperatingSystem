@@ -1,6 +1,6 @@
 #include "syscall.h"
 
-#define MAX_SIZE (100)
+#define MAX_SIZE (10)
 
 int main()
 {
@@ -20,19 +20,26 @@ int main()
     int temp;            // Temporary variable for swapping
 
     /* File handling */
-    int openFileId; // File descriptor for the file to be written
+    int openFileId;                   // File descriptor for the file to be written
+    char *filename = "quicksort.txt"; // Name of the file to be written
 
     top = -1;
     left = 0;
 
+    // PrintString("*======================================================*\n");
+    // PrintString("| Welcome to the Quick Sort Integer program in Nachos! |\n");
+    // PrintString("*======================================================*\n");
+
+    // PrintChar('\n');
+
     // Read n, the number of elements in the array
     do
     {
-        PrintString("Enter n (1 <= n <= 100): ");
+        PrintString("Enter number of elements in the array: ");
         n = ReadInt();
-        if (n < 0 || n > 100)
+        if (n <= 0 || n > MAX_SIZE)
             PrintString("n must be an integer between 1 and 100 (inclusive), please try again\n");
-    } while (n < 0 || n > 100);
+    } while (n <= 0 || n > MAX_SIZE);
 
     right = n - 1;
     i = 0;
@@ -40,20 +47,30 @@ int main()
     // Read the elements of the array
     for (i; i < n; i++)
     {
-        PrintString("Enter element [");
+        PrintString("+ Enter element [");
         PrintInt(i);
         PrintString("]: ");
         a[i] = ReadInt();
     }
 
-    // Read the order of sorting
-    do
+    // Print the array to console
+    PrintString("Initial array: [");
+    for (i = 0; i < n - 1; i++)
     {
-        PrintString("Enter type of sorting (1: increasing, 2: decreasing): ");
-        order = ReadInt();
-        if (order != 1 && order != 2)
-            PrintString("Wrong input, please try again\n");
-    } while (order != 1 && order != 2);
+        PrintInt(a[i]);
+        PrintString(", ");
+    }
+    if (n > 0)
+        PrintInt(a[n - 1]);
+    PrintString("]\n");
+    // Read the order of sorting
+    // do
+    // {
+    //     PrintString("Enter type of sorting (1: increasing, 2: decreasing): ");
+    //     order = ReadInt();
+    //     if (order != 1 && order != 2)
+    //         PrintString("Wrong input, please try again\n");
+    // } while (order != 1 && order != 2);
 
     // Quick sort
     stack[++top] = left;
@@ -100,40 +117,61 @@ int main()
     }
 
     // Reverse the array if order is decreasing
-    if (order == 2)
-    {
-        for (i = 0; i < n / 2; i++)
-        {
-            temp = a[i];
-            a[i] = a[n - i - 1];
-            a[n - i - 1] = temp;
-        }
-    }
+    // if (order == 2)
+    // {
+    //     for (i = 0; i < n / 2; i++)
+    //     {
+    //         temp = a[i];
+    //         a[i] = a[n - i - 1];
+    //         a[n - i - 1] = temp;
+    //     }
+    // }
 
     // Print the sorted array to console
-    PrintString("Sorted array: ");
-    for (i = 0; i < n; i++)
+    PrintString("Sorted array:  [");
+    for (i = 0; i < n - 1; i++)
     {
         PrintInt(a[i]);
+        PrintChar(',');
         PrintChar(' ');
     }
+    if (n > 0)
+        PrintInt(a[n - 1]);
+    PrintString("]\n");
 
     // Open the file to write the sorted array
-    openFileId = Open("quicksort.txt", 0);
+    openFileId = Open(filename, 0);
 
-    // Write the sorted array to file
-    if (openFileId != -1)
+    while (openFileId == -1)
     {
-        for (i = 0; i < n; i++)
+        PrintString("Can't open file ");
+        PrintString(filename);
+        PrintChar('\n');
+        if (CreateFile(filename) == -1)
         {
-            Write(&a[i], 4, openFileId);
+            PrintString("Can't create file quicksort.txt\n");
+            return 1;
         }
-        Close(openFileId);
-        return 0;
+        else
+        {
+            openFileId = Open(filename, 0);
+            PrintString("Create file quicksort.txt to write sorted array successfully\n");
+        }
     }
-    else
+
+    for (i = 0; i < n; i++)
     {
-        PrintString("Can't open file\n");
-        return 1;
+        Write(&a[i], 4, openFileId);
     }
+    Close(openFileId);
+    PrintString("\nWrite sorted array to file quicksort.txt successfully\n\n");
+
+    // PrintString("*========================================================*\n");
+    // PrintString("|   Thank you for using the Quick Sort Integer program!  |\n");
+    // PrintString("*========================================================*\n");
+
+    PrintChar('\n');
+    return 0;
 }
+
+#undef MAX_SIZE

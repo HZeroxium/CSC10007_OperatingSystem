@@ -141,7 +141,12 @@ int main()
     PrintChar('\n');
 
     openFileId = Open("ascii.csv", 0); // Open "ascii.txt" file in write mode
-    if (openFileId != -1)              // If file opened successfully
+    while (openFileId == -1)           // If file open failed
+    {
+        CreateFile("ascii.csv"); // Create "ascii.csv" file
+        openFileId = Open("ascii.csv", 0);
+    }
+    if (openFileId != -1) // If file opened successfully
     {
         PrintString(buffer);                     // Print the content to console output
         result = Write(buffer, 857, openFileId); // Write the content to the file

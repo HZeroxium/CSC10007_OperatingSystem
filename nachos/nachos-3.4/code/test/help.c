@@ -14,7 +14,14 @@ int main()
     PrintChar('\n');
 
     openFileId = Open("mota.txt", 1); // Open the file to read
-    if (openFileId != -1)             // If the file is opened successfully
+
+    while (openFileId == -1) // If the file open failed
+    {
+        CreateFile("mota.txt"); // Create the file
+        openFileId = Open("mota.txt", 1);
+    }
+
+    if (openFileId != -1) // If the file is opened successfully
     {
         result = Read(buffer, BUFFER_SIZE, openFileId); // Read the content of the file
         if (result == -1)

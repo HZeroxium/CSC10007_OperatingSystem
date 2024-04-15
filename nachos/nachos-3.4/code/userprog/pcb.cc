@@ -4,6 +4,8 @@
 #include "thread.h"
 #include "addrspace.h"
 
+extern void StartProcess_2(int id);
+
 PCB::PCB(int id)
 {
     joinsem = new Semaphore("JoinSem", 0);
@@ -106,4 +108,27 @@ void PCB::ExitRelease()
 char *PCB::GetNameThread()
 {
     return thread->getName();
+}
+
+int PCB::Exec(char *filename, int pID)
+{
+    mutex->P();
+
+    thread = new Thread(filename);
+
+    if (thread == NULL)
+    {
+        printf("\nPCB::Exec : Can't not create new thread.\n");
+        mutex->V();
+        return -1;
+    }
+    thread->processID = pID;
+
+    parentID = currentThread->processID;
+
+    thread->Fork(StartProcess_2, pID);
+
+    mutex->V();
+
+    return pid;
 }

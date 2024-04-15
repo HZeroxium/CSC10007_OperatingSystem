@@ -42,6 +42,10 @@
 #define SC_FreeFloat 50
 #define SC_FloatToString 51
 
+#define SC_CreateSemaphore 52
+#define SC_Down 53
+#define SC_Up 54
+
 #ifndef IN_ASM
 
 /* The system call interface.  These are the operations the Nachos
@@ -168,9 +172,6 @@ int Write(char *buffer, int size, OpenFileId id);
 
 /* Address space control operations: Exit, Exec, and Join */
 
-/* This user program is done (status = 0 means exited normally). */
-void Exit(int status);
-
 /* A unique identifier for an executing user program (address space) */
 typedef int SpaceId;
 
@@ -183,6 +184,9 @@ SpaceId Exec(char *name);
  * Return the exit status.
  */
 int Join(SpaceId id);
+
+/* This user program is done (status = 0 means exited normally). */
+void Exit(int status);
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program.
@@ -197,6 +201,12 @@ void Fork(void (*func)());
  * or not.
  */
 void Yield();
+
+int CreateSemaphore(char *name, int semval);
+
+int Down(char *name);
+
+int Up(char *name);
 
 #endif /* IN_ASM */
 

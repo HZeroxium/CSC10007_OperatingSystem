@@ -26,11 +26,10 @@ int main()
     top = -1;
     left = 0;
 
-    // PrintString("*======================================================*\n");
-    // PrintString("| Welcome to the Quick Sort Integer program in Nachos! |\n");
-    // PrintString("*======================================================*\n");
-
-    // PrintChar('\n');
+    PrintString("*======================================================*\n");
+    PrintString("| Welcome to the Quick Sort Integer program in Nachos! |\n");
+    PrintString("*======================================================*\n");
+    PrintChar('\n');
 
     // Read n, the number of elements in the array
     do
@@ -63,14 +62,15 @@ int main()
     if (n > 0)
         PrintInt(a[n - 1]);
     PrintString("]\n");
+
     // Read the order of sorting
-    // do
-    // {
-    //     PrintString("Enter type of sorting (1: increasing, 2: decreasing): ");
-    //     order = ReadInt();
-    //     if (order != 1 && order != 2)
-    //         PrintString("Wrong input, please try again\n");
-    // } while (order != 1 && order != 2);
+    do
+    {
+        PrintString("Enter type of sorting (1: increasing, 2: decreasing): ");
+        order = ReadInt();
+        if (order != 1 && order != 2)
+            PrintString("Wrong input, please try again\n");
+    } while (order != 1 && order != 2);
 
     // Quick sort
     stack[++top] = left;
@@ -117,15 +117,15 @@ int main()
     }
 
     // Reverse the array if order is decreasing
-    // if (order == 2)
-    // {
-    //     for (i = 0; i < n / 2; i++)
-    //     {
-    //         temp = a[i];
-    //         a[i] = a[n - i - 1];
-    //         a[n - i - 1] = temp;
-    //     }
-    // }
+    if (order == 2)
+    {
+        for (i = 0; i < n / 2; i++)
+        {
+            temp = a[i];
+            a[i] = a[n - i - 1];
+            a[n - i - 1] = temp;
+        }
+    }
 
     // Print the sorted array to console
     PrintString("Sorted array:  [");
@@ -159,18 +159,21 @@ int main()
         }
     }
 
+    // Write the sorted array to the file
     for (i = 0; i < n; i++)
     {
         Write(&a[i], 4, openFileId);
     }
+
     Close(openFileId);
+
     PrintString("\nWrite sorted array to file quicksort.txt successfully\n\n");
 
-    // PrintString("*========================================================*\n");
-    // PrintString("|   Thank you for using the Quick Sort Integer program!  |\n");
-    // PrintString("*========================================================*\n");
-
+    PrintString("*========================================================*\n");
+    PrintString("|   Thank you for using the Quick Sort Integer program!  |\n");
+    PrintString("*========================================================*\n");
     PrintChar('\n');
+
     return 0;
 }
 

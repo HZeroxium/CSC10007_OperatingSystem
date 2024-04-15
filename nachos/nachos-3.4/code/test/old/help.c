@@ -7,10 +7,10 @@ int main()
     int openFileId;           // File descriptor for the file to be read
     char buffer[BUFFER_SIZE]; // Buffer to store the content of the file
     int result = 0;           // Result of the read operation
+
     PrintString("*==========================================================*\n");
     PrintString("|      Help command for Nachos file system (mota.txt)      |\n");
     PrintString("*==========================================================*\n");
-
     PrintChar('\n');
 
     openFileId = Open("mota.txt", 1); // Open the file to read

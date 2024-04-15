@@ -24,7 +24,6 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-#include "filesys.h"
 
 #define MaxFileLength 32
 #define MAX_NUM_LENGTH 11
@@ -641,6 +640,134 @@ void Handle_SC_Write()
     return IncreasePC();
 }
 
+void Handle_SC_Exec()
+{
+    int virtAddr = machine->ReadRegister(4);               // Read virtual address of filename PARAMETER from register 4
+    char *filename = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+    OpenFile *executable = fileSystem->Open(filename);     // Open file with filename
+
+    if (executable == NULL) // If file is not exist
+    {
+        SynchPrint("Can't open file because file is not exist.");
+        machine->WriteRegister(2, -1); // Failed to open file, return -1
+        return IncreasePC();
+    }
+    delete executable; // Delete executable file
+
+    int id = pTab->ExecUpdate(filename); // Update process table with new process
+    machine->WriteRegister(2, id);       // Write process id to register 2
+
+    delete filename;
+    return IncreasePC();
+}
+
+void Handle_SC_Join()
+{
+    int id = machine->ReadRegister(4); // Read process id PARAMETER from register 4
+    int result = pTab->JoinUpdate(id); // Update process table with process id
+    machine->WriteRegister(2, result); // Write result to register 2
+    return IncreasePC();
+}
+
+void Handle_SC_Exit()
+{
+    int exitStatus = machine->ReadRegister(4); // Read exit status PARAMETER from register 4
+    if (exitStatus != 0)
+    {
+        SynchPrint("Exit with status: ");
+        SynchPrint(exitStatus);
+        return IncreasePC();
+    }
+    int res = pTab->ExitUpdate(exitStatus); // Update process table with exit status
+    machine->WriteRegister(2, res);         // Write result to register 2
+
+    currentThread->FreeSpace(); // Free space for current thread
+    currentThread->Finish();    // Finish current thread
+    return IncreasePC();
+}
+
+void Handle_SC_CreateSemaphore()
+{
+    int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
+    int semval = machine->ReadRegister(5);   // Read semaphore value PARAM
+
+    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+
+    if (name == NULL) // If name is NULL (not enough memory in system)
+    {
+        SynchPrint("Not enough memory in system\n");
+        machine->WriteRegister(2, -1); // Failed to create semaphore, return -1
+        delete[] name;
+        return IncreasePC();
+    }
+
+    int res = sTab->Create(name, semval); // Create semaphore with name and value
+
+    if (res == -1) // If semaphore is not created
+    {
+        SynchPrint("Can't create semaphore because semaphore is already exist\n");
+        machine->WriteRegister(2, -1); // Failed to create semaphore, return -1
+    }
+
+    machine->WriteRegister(2, res); // Write result to register 2
+    delete[] name;
+    return IncreasePC();
+}
+
+void Handle_SC_Down()
+{
+    int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
+
+    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+
+    if (name == NULL) // If name is NULL (not enough memory in system)
+    {
+        SynchPrint("Not enough memory in system\n");
+        machine->WriteRegister(2, -1); // Failed to down semaphore, return -1
+        delete[] name;
+        return IncreasePC();
+    }
+
+    int res = sTab->Down(name); // Down semaphore with name
+
+    if (res == -1) // If semaphore is
+    {
+        SynchPrint("Can't down semaphore because semaphore is not exist\n");
+        machine->WriteRegister(2, -1); // Failed to down semaphore, return -1
+    }
+
+    machine->WriteRegister(2, res); // Write result to register 2
+    delete[] name;
+    return IncreasePC();
+}
+
+void Handle_SC_Up()
+{
+    int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
+
+    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+
+    if (name == NULL) // If name is NULL (not enough memory in system)
+    {
+        SynchPrint("Not enough memory in system\n");
+        machine->WriteRegister(2, -1); // Failed to up semaphore, return -1
+        delete[] name;
+        return IncreasePC();
+    }
+
+    int res = sTab->Up(name); // Up semaphore with name
+
+    if (res == -1) // If semaphore is
+    {
+        SynchPrint("Can't up semaphore because semaphore is not exist\n");
+        machine->WriteRegister(2, -1); // Failed to up semaphore, return -1
+    }
+
+    machine->WriteRegister(2, res); // Write result to register 2
+    delete[] name;
+    return IncreasePC();
+}
+
 /// @brief Exception handler for user program system calls
 /// @param which Type of exception
 void ExceptionHandler(ExceptionType which)
@@ -686,6 +813,18 @@ void ExceptionHandler(ExceptionType which)
             return Handle_SC_FreeFloat();
         case SC_FloatToString:
             return Handle_SC_FloatToString();
+        case SC_Exec:
+            return Handle_SC_Exec();
+        case SC_Join:
+            return Handle_SC_Join();
+        case SC_Exit:
+            return Handle_SC_Exit();
+        case SC_CreateSemaphore:
+            return Handle_SC_CreateSemaphore();
+        case SC_Down:
+            return Handle_SC_Down();
+        case SC_Up:
+            return Handle_SC_Up();
         default:
             interrupt->Halt();
             break;

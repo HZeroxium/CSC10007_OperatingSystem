@@ -51,6 +51,8 @@ public:
 	OpenFile **file_table; // A table to store all the file
 	int index;			   // Index of the file table
 
+	/// @brief Default constructor
+	/// @param format Format the file system
 	FileSystem(bool format)
 	{
 		file_table = new OpenFile *[MAX_FILE];
@@ -65,6 +67,7 @@ public:
 		file_table[index++] = this->Open("stdout", STDOUT); // Open stdout with type STDOUT at slot 1
 	}
 
+	/// @brief Destructor
 	~FileSystem()
 	{
 		for (int i = 0; i < MAX_FILE; ++i)
@@ -75,6 +78,10 @@ public:
 		delete[] file_table;
 	}
 
+	/// @brief Create a new file with the given name and initial size
+	/// @param name Name of the file in ./code directory
+	/// @param initialSize Initial size of the file
+	/// @return True if the file is created successfully, otherwise false
 	bool Create(char *name, int initialSize)
 	{
 		int fileDescriptor = OpenForWrite(name);
@@ -85,6 +92,9 @@ public:
 		return TRUE;
 	}
 
+	/// @brief Open the file with the given name
+	/// @param name Name of the file in ./code directory
+	/// @return OpenFile pointer of the opened file
 	OpenFile *Open(char *name)
 	{
 		int fileDescriptor = OpenForReadWrite(name, FALSE);
@@ -94,6 +104,10 @@ public:
 		return new OpenFile(fileDescriptor);
 	}
 
+	/// @brief Open the file with the given name and open mode
+	/// @param name Name of the file in ./code directory
+	/// @param type Type of the file (0: Read/Write, 1: Read only, 2: Console Input, 3: Console Output)
+	/// @return OpenFile pointer of the opened file
 	OpenFile *Open(char *name, int type)
 	{
 		int fileDescriptor = OpenForReadWrite(name, FALSE);
@@ -106,6 +120,8 @@ public:
 		return new OpenFile(fileDescriptor, type);
 	}
 
+	/// @brief Get the allocated slot in the file table
+	/// @return Allocated slot in the file table
 	int GetAllocatedSlot()
 	{
 		for (int i = 2; i < 15; i++)
@@ -116,6 +132,7 @@ public:
 		return -1;
 	}
 
+	/// @brief Delete a file (UNIX unlink)
 	bool Remove(char *name)
 	{
 		return Unlink(name) == 0;
@@ -143,17 +160,26 @@ public:
 	/// @param name Name of the file in ./code directory
 	/// @return OpenFile pointer of the opened file
 	OpenFile *Open(char *name);
+
 	/// @brief Open the file with the given name and open mode
 	/// @param name Name of the file in ./code directory
 	/// @param type Type of the file (0: Read/Write, 1: Read only, 2: Console Input, 3: Console Output)
 	/// @return OpenFile pointer of the opened file
 	OpenFile *Open(char *name, int type);
+
+	/// @brief Get the allocated slot in the file table
+	/// @return Allocated slot in the file table
 	int GetAllocatedSlot();
 
+	/// @brief Delete a file (UNIX unlink)
+	/// @param name Name of the file in ./code directory
+	/// @return True if the file is deleted successfully, otherwise false
 	bool Remove(char *name); // Delete a file (UNIX unlink)
 
+	/// @brief List all the files in the file system
 	void List(); // List all the files in the file system
 
+	/// @brief Print all the files and their contents
 	void Print(); // List all the files and their contents
 
 private:

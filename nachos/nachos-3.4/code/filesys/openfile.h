@@ -36,12 +36,14 @@ class OpenFile
 public:
 	int type; // Open mode
 
+	/// @brief Default constructor
 	OpenFile(int f)
 	{
 		file = f;
 		currentOffset = 0;
 		type = 0;
 	}
+
 	OpenFile(int f, int t)
 	{
 		file = f;
@@ -113,9 +115,12 @@ class OpenFile
 {
 public:
 	int type; // Open mode
-	// Open a file whose header is located at "sector" on the disk
+	/// @brief Default constructor
+	/// @param sector Sector of the file
 	OpenFile(int sector);
-	// Open a file with a specific type
+	/// @brief Parameterized constructor
+	/// @param sector Sector of the file
+	/// @param type Open mode of the file
 	OpenFile(int sector, int type);
 
 	~OpenFile(); // Close the file

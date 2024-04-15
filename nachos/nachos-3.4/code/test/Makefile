@@ -36,7 +36,7 @@ INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
 # ---------------------------------------------------------------------------------------
-all: halt
+all: halt ping pong scheduler
 # ---------------------------------------------------------------------------------------
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -49,4 +49,26 @@ halt.o: halt.c
 halt: halt.o start.o
 	$(LD) $(LDFLAGS) start.o halt.o -o halt.coff
 	../bin/coff2noff halt.coff halt
+
+# ---------------------------------------------------------------------------------------
+ping.o: ping.c
+	$(CC) $(CFLAGS) -c halt.c
+ping: ping.o start.o
+	$(LD) $(LDFLAGS) start.o ping.o -o ping.coff
+	../bin/coff2noff ping.coff ping
+
+# ---------------------------------------------------------------------------------------
+pong.o: pong.c
+	$(CC) $(CFLAGS) -c pong.c
+pong: pong.o pong.o
+	$(LD) $(LDFLAGS) start.o pong.o -o pong.coff
+	../bin/coff2noff pong.coff pong
+
+# ---------------------------------------------------------------------------------------
+scheduler.o: scheduler.c
+	$(CC) $(CFLAGS) -c halt.c
+scheduler: scheduler.o start.o
+	$(LD) $(LDFLAGS) start.o scheduler.o -o scheduler.coff
+	../bin/coff2noff scheduler.coff scheduler
+
 

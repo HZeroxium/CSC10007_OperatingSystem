@@ -15,6 +15,9 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
+#include "bitmap.h"
+#include "ptable.h"
+#include "stable.h"
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); // Initialization,
@@ -35,6 +38,11 @@ extern Timer *timer;				// the hardware alarm clock
 #include "synch.h"
 extern Machine *machine;			// user program memory and registers
 extern SynchConsole *gSynchConsole; // synchronizes threads using console I/O
+
+extern Semaphore *addrLock;		// semaphore
+extern BitMap *gPhysPageBitMap; // manages physical frames
+extern PTable *pTab;			// manages processes
+extern STable *sTab;			// manages semaphores
 
 #endif
 

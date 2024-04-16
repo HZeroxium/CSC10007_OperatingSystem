@@ -6,11 +6,48 @@
 
 #define MAX_SEMAPHORE 10
 
+/// @brief Sem class to manage semaphore with name and Semaphore object
+class Sem
+{
+private:
+    char name[50];
+    Semaphore *sem;
+
+public:
+    Sem(char *name, int initValue)
+    {
+        strcpy(this->name, name);
+        sem = new Semaphore(this->name, initValue);
+    }
+
+    ~Sem()
+    {
+        if (sem)
+            delete sem;
+    }
+
+    void Wait()
+    {
+        sem->P();
+    }
+
+    void Signal()
+    {
+        sem->V();
+    }
+
+    char *GetName()
+    {
+        return this->name;
+    }
+};
+
+/// @brief STable class to manage semaphore table
 class STable
 {
 private:
     BitMap *bm;
-    Semaphore *semTab[MAX_SEMAPHORE];
+    Sem *semTab[MAX_SEMAPHORE];
 
 public: // Constructor & Destructor
     STable();
@@ -18,11 +55,11 @@ public: // Constructor & Destructor
 
 public: // Methods
     int Create(char *name, int init);
-    Semaphore *Get(char *name);
-    int FindFreeSlot();
+    int Wait(char *name);
+    int Signal(char *name);
 
-    int Up(char *name);
-    int Down(char *name);
+    int FindFreeSlot();
+    Sem *GetSemaphore(char *name);
 };
 
 #endif

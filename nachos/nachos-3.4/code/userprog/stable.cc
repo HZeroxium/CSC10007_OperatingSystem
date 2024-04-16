@@ -1,5 +1,9 @@
 #include "stable.h"
 
+//************************************************************************************
+//***************************** CONSTRUCTOR AND DESTRUCTOR ***************************
+//************************************************************************************
+
 /// @brief Default constructor
 STable::STable()
 {
@@ -27,6 +31,10 @@ STable::~STable()
         }
     }
 }
+
+//************************************************************************************
+//************************************ METHODS ***************************************
+//************************************************************************************
 
 /// @brief Create a new semaphore in semaphores table
 /// @param name Name of semaphore
@@ -62,41 +70,43 @@ int STable::Create(char *name, int init)
 /// @brief Down operation on semaphore with name
 /// @param name Name of semaphore
 /// @return 0 if success, -1 if fail
-int STable::Down(char *name)
+int STable::Wait(char *name)
 {
-    Semaphore *sem = this->Get(name);
+    Sem *sem = GetSemaphore(name);
     if (sem == NULL)
     {
         return -1;
+        printf("Semaphore not found\n");
     }
-    sem->P();
+    sem->Wait();
     return 0;
 }
 
 /// @brief Up operation on semaphore with name
 /// @param name Name of semaphore
 /// @return 0 if success, -1 if fail
-int STable::Up(char *name)
+int STable::Signal(char *name)
 {
-    Semaphore *sem = this->Get(name);
+    Sem *sem = GetSemaphore(name);
     if (sem == NULL)
     {
         return -1;
+        printf("Semaphore not found\n");
     }
-    sem->V();
+    sem->Signal();
     return 0;
 }
 
 /// @brief Get semaphore with name
 /// @param name Name of semaphore
 /// @return Pointer to semaphore if found, NULL if not found
-Semaphore *STable::Get(char *name)
+Sem *STable::GetSemaphore(char *name)
 {
     for (int i = 0; i < MAX_SEMAPHORE; i++)
     {
         if (bm->Test(i))
         {
-            if (strcmp(name, semTab[i]->getName()) == 0)
+            if (strcmp(name, semTab[i]->GetName()) == 0)
             {
                 return semTab[i];
             }

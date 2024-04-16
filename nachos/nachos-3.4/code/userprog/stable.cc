@@ -47,7 +47,7 @@ int STable::Create(char *name, int init)
     {
         if (bm->Test(i))
         {
-            if (strcmp(name, semTab[i]->getName()) == 0)
+            if (strcmp(name, semTab[i]->GetName()) == 0)
             {
                 return -1;
             }
@@ -63,7 +63,7 @@ int STable::Create(char *name, int init)
     }
 
     // If found, create new semaphore in semTab[id]
-    this->semTab[id] = new Semaphore(name, init);
+    this->semTab[id] = new Sem(name, init);
     return 0;
 }
 

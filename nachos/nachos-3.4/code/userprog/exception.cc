@@ -728,7 +728,7 @@ void Handle_SC_Down()
         return IncreasePC();
     }
 
-    int res = sTab->Down(name); // Down semaphore with name
+    int res = sTab->Wait(name); // Down semaphore with name
 
     if (res == -1) // If semaphore is
     {
@@ -755,7 +755,7 @@ void Handle_SC_Up()
         return IncreasePC();
     }
 
-    int res = sTab->Up(name); // Up semaphore with name
+    int res = sTab->Signal(name); // Up semaphore with name
 
     if (res == -1) // If semaphore is
     {

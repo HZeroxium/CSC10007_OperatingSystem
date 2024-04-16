@@ -52,7 +52,7 @@ halt: halt.o start.o
 
 # ---------------------------------------------------------------------------------------
 ping.o: ping.c
-	$(CC) $(CFLAGS) -c halt.c
+	$(CC) $(CFLAGS) -c ping.c
 ping: ping.o start.o
 	$(LD) $(LDFLAGS) start.o ping.o -o ping.coff
 	../bin/coff2noff ping.coff ping
@@ -66,7 +66,7 @@ pong: pong.o pong.o
 
 # ---------------------------------------------------------------------------------------
 scheduler.o: scheduler.c
-	$(CC) $(CFLAGS) -c halt.c
+	$(CC) $(CFLAGS) -c scheduler.c
 scheduler: scheduler.o start.o
 	$(LD) $(LDFLAGS) start.o scheduler.o -o scheduler.coff
 	../bin/coff2noff scheduler.coff scheduler

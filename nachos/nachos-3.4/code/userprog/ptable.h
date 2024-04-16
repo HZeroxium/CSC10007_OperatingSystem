@@ -16,11 +16,12 @@ private:
 
     Semaphore *bmsem; // Prevent the case of loading 2 processes at the same time
 
-public:
+public: // Constructor and Destructor
     PTable(int = 10); // Initialize the size of pcb object to save process size
                       // Set the initial value to null
     ~PTable();        // Destroy the created objects
 
+public: 
     int ExecUpdate(char *); // Handle for system call SC_Exit
     int ExitUpdate(int);    // Handle for system call SC_Exit
     int JoinUpdate(int);    // Handle for system call SC_Join

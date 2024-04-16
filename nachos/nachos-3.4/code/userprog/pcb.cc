@@ -6,13 +6,18 @@
 
 extern void StartProcess_2(int id);
 
+//************************************************************************************************
+//*************************** CONSTRUCTOR AND DESTRUCTOR *****************************************
+//************************************************************************************************
+
+/// @brief Constructor
+/// @param id Process ID
 PCB::PCB(int id)
 {
     joinsem = new Semaphore("JoinSem", 0);
     exitsem = new Semaphore("ExitSem", 0);
     mutex = new Semaphore("Mutex", 1);
 
-    pid = id;
     exitcode = 0;
     numwait = 0;
 
@@ -22,9 +27,9 @@ PCB::PCB(int id)
         parentID = 0;
 
     thread = NULL;
-    JoinStatus = -1;
 }
 
+/// @brief Destructor
 PCB::~PCB()
 {
     if (joinsem != NULL)
@@ -40,9 +45,13 @@ PCB::~PCB()
     }
 }
 
+//************************************************************************************************
+//************************************ GETTERS ***************************************************
+//************************************************************************************************
+
 int PCB::GetID()
 {
-    return pid;
+    return thread->processID;
 }
 
 int PCB::GetNumWait()
@@ -60,6 +69,15 @@ char *PCB::GetFileName()
     return filename;
 }
 
+char *PCB::GetNameThread()
+{
+    return thread->getName();
+}
+
+//************************************************************************************************
+//************************************ SETTERS ***************************************************
+//************************************************************************************************
+
 void PCB::SetExitCode(int ec)
 {
     exitcode = ec;
@@ -69,6 +87,10 @@ void PCB::SetFileName(char *name)
 {
     strcpy(filename, name);
 }
+
+//************************************************************************************************
+//************************************ PROCESS CONTROL *******************************************
+//************************************************************************************************
 
 void PCB::IncNumWait()
 {
@@ -80,7 +102,7 @@ void PCB::IncNumWait()
 void PCB::DecNumWait()
 {
     mutex->P();
-    if (numwait)
+    if (numwait > 0)
         numwait--;
     mutex->V();
 }
@@ -105,11 +127,6 @@ void PCB::ExitRelease()
     exitsem->V();
 }
 
-char *PCB::GetNameThread()
-{
-    return thread->getName();
-}
-
 int PCB::Exec(char *filename, int pID)
 {
     mutex->P();
@@ -130,5 +147,5 @@ int PCB::Exec(char *filename, int pID)
 
     mutex->V();
 
-    return pid;
+    return pID;
 }

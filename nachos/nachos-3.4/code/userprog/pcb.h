@@ -4,6 +4,7 @@
 #include "thread.h"
 #include "synch.h"
 
+/// @brief Process Control Block
 class PCB
 {
 private:
@@ -15,12 +16,10 @@ private:
     int numwait; // Number of waiting processes
 
     Thread *thread; // Thread of the program
-    int pid;        // Process ID
     char filename[32];
 
 public:
-    int parentID;   // ID of the parent process
-    int JoinStatus; // Join status with which process? If yes, the value is the ID of the process it joins
+    int parentID; // ID of the parent process
 
 public:
     PCB(int id);

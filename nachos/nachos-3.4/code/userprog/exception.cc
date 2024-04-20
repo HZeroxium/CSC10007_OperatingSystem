@@ -642,45 +642,64 @@ void Handle_SC_Write()
 
 void Handle_SC_Exec()
 {
-    int virtAddr = machine->ReadRegister(4);               // Read virtual address of filename PARAMETER from register 4
-    char *filename = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
-    OpenFile *executable = fileSystem->Open(filename);     // Open file with filename
+    int result = -1; // Result of the function
+    // Read system call parameters
+    int virtAddr = machine->ReadRegister(4); // Read virtual address of filename PARAMETER from register 4
 
-    if (executable == NULL) // If file is not exist
+    // Copy buffer from User memory space to System memory space
+    char *filename = User2System(virtAddr, MaxFileLength);
+
+    // Check if filename is NULL (not enough memory in system)
+    OpenFile *executable = fileSystem->Open(filename); // Open file with filename
+
+    if (executable != NULL) // If file is not exist
     {
-        SynchPrint("Can't open file because file is not exist.");
-        machine->WriteRegister(2, -1); // Failed to open file, return -1
-        return IncreasePC();
+        result = pTab->ExecUpdate(filename); // Update process table with new process
     }
+
+    // Write result to register 2
+    machine->WriteRegister(2, result);
+
     delete executable; // Delete executable file
+    delete[] filename;
 
-    int id = pTab->ExecUpdate(filename); // Update process table with new process
-    machine->WriteRegister(2, id);       // Write process id to register 2
-
-    delete filename;
+    // Increase Program Counter
     return IncreasePC();
 }
 
 void Handle_SC_Join()
 {
+    // Read system call parameters
     int id = machine->ReadRegister(4); // Read process id PARAMETER from register 4
-    int result = pTab->JoinUpdate(id); // Update process table with process id
+
+    // Call JoinUpdate function to update process table with process id
+    int result = pTab->JoinUpdate(id);
+
+    // Write result to register 2
     machine->WriteRegister(2, result); // Write result to register 2
     return IncreasePC();
 }
 
 void Handle_SC_Exit()
 {
+    // Read system call parameters
     int exitStatus = machine->ReadRegister(4); // Read exit status PARAMETER from register 4
+
+    // Check if exit status is not 0
     if (exitStatus != 0)
     {
         SynchPrint("Exit with status: ");
         SynchPrint(exitStatus);
         return IncreasePC();
     }
-    int res = pTab->ExitUpdate(exitStatus); // Update process table with exit status
-    machine->WriteRegister(2, res);         // Write result to register 2
 
+    // Call ExitUpdate function to update process table with exit status
+    int res = pTab->ExitUpdate(exitStatus);
+
+    // Write result to register 2
+    machine->WriteRegister(2, res);
+
+    // Free space and finish current thread
     currentThread->FreeSpace(); // Free space for current thread
     currentThread->Finish();    // Finish current thread
     return IncreasePC();
@@ -688,83 +707,101 @@ void Handle_SC_Exit()
 
 void Handle_SC_CreateSemaphore()
 {
+    int result = -1;
+    // Read system call parameters
     int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
     int semval = machine->ReadRegister(5);   // Read semaphore value PARAM
 
-    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+    // Copy buffer from User memory space to System memory space
+    char *name = User2System(virtAddr, MaxFileLength);
 
     if (name == NULL) // If name is NULL (not enough memory in system)
     {
         SynchPrint("Not enough memory in system\n");
-        machine->WriteRegister(2, -1); // Failed to create semaphore, return -1
-        delete[] name;
-        return IncreasePC();
     }
-
-    int res = sTab->Create(name, semval); // Create semaphore with name and value
-
-    if (res == -1) // If semaphore is not created
+    else
     {
-        SynchPrint("Can't create semaphore because semaphore is already exist\n");
-        machine->WriteRegister(2, -1); // Failed to create semaphore, return -1
-    }
+        // Create semaphore with Create method of STable
+        result = sTab->Create(name, semval);
 
-    machine->WriteRegister(2, res); // Write result to register 2
+        // Check if semaphore is already exist
+        if (result == -1)
+        {
+            SynchPrint("Can't create semaphore because semaphore is already exist\n");
+        }
+    }
     delete[] name;
+
+    // Write result to register 2
+    machine->WriteRegister(2, result);
+
+    // Increase Program Counter
     return IncreasePC();
 }
 
 void Handle_SC_Down()
 {
+    int result = -1;
+    // Read system call parameters
     int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
 
-    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+    // Copy buffer from User memory space to System memory space
+    char *name = User2System(virtAddr, MaxFileLength);
 
-    if (name == NULL) // If name is NULL (not enough memory in system)
+    // Check if name is valid
+    if (name == NULL)
     {
         SynchPrint("Not enough memory in system\n");
-        machine->WriteRegister(2, -1); // Failed to down semaphore, return -1
-        delete[] name;
-        return IncreasePC();
     }
-
-    int res = sTab->Wait(name); // Down semaphore with name
-
-    if (res == -1) // If semaphore is
+    else
     {
-        SynchPrint("Can't down semaphore because semaphore is not exist\n");
-        machine->WriteRegister(2, -1); // Failed to down semaphore, return -1
-    }
+        // Down semaphore with name
+        result = sTab->Wait(name);
 
-    machine->WriteRegister(2, res); // Write result to register 2
+        // Check if semaphore is not exist
+        if (result == -1)
+        {
+            SynchPrint("Can't down semaphore because semaphore is not exist\n");
+        }
+    }
     delete[] name;
+    // Write result to register 2
+    machine->WriteRegister(2, result); // Write result to register 2
+
+    // Increase Program Counter
     return IncreasePC();
 }
 
 void Handle_SC_Up()
 {
+    int result = -1;
+    // Read system call parameters
     int virtAddr = machine->ReadRegister(4); // Read virtual address of semaphore name PARAM
 
-    char *name = User2System(virtAddr, MaxFileLength); // Copy buffer from User memory space to System memory space
+    // Copy buffer from User memory space to System memory space
+    char *name = User2System(virtAddr, MaxFileLength);
 
-    if (name == NULL) // If name is NULL (not enough memory in system)
+    // Check if name is valid
+    if (name == NULL)
     {
         SynchPrint("Not enough memory in system\n");
-        machine->WriteRegister(2, -1); // Failed to up semaphore, return -1
-        delete[] name;
-        return IncreasePC();
     }
-
-    int res = sTab->Signal(name); // Up semaphore with name
-
-    if (res == -1) // If semaphore is
+    else
     {
-        SynchPrint("Can't up semaphore because semaphore is not exist\n");
-        machine->WriteRegister(2, -1); // Failed to up semaphore, return -1
-    }
+        // Up semaphore with name
+        result = sTab->Signal(name);
 
-    machine->WriteRegister(2, res); // Write result to register 2
+        // Check if semaphore is not exist
+        if (result == -1)
+        {
+            SynchPrint("Can't down semaphore because semaphore is not exist\n");
+        }
+    }
     delete[] name;
+    // Write result to register 2
+    machine->WriteRegister(2, result); // Write result to register 2
+
+    // Increase Program Counter
     return IncreasePC();
 }
 

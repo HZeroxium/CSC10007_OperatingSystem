@@ -57,6 +57,7 @@ int main()
                 }
             }
 
+            // Write the index of the scanner to the result.txt file
             if (scan != 0)
             {
                 if (scan1 <= scan2 && scan1 <= scan3)

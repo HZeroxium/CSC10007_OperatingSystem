@@ -2,19 +2,25 @@
 
 void main()
 {
-    int pingPID, pongPID;
-    int f_Success;
-    f_Success = CreateSemaphore("ping", 5);
-    if (f_Success == -1)
+    int pingPID, pongPID; // Process ID
+    int success;          // Check if the operation is successful
+
+    // Initialize 2 Semaphores to manage 2 threads
+    success = CreateSemaphore("ping", 5);
+    if (success == -1)
         return;
 
-    f_Success = CreateSemaphore("pong", 5);
-    if (f_Success == -1)
+    success = CreateSemaphore("pong", 5);
+    if (success == -1)
         return;
 
     PrintString("Ping-Pong Program\n\n");
+
+    // Create ping and pong threads
     pingPID = Exec("./test/ping");
     pongPID = Exec("./test/pong");
+
+    // Wait for the threads to finish
     Join(pingPID);
     Join(pongPID);
 }

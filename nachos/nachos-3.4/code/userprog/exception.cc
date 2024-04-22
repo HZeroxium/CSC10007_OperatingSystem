@@ -640,6 +640,7 @@ void Handle_SC_Write()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Execfrom user program
 void Handle_SC_Exec()
 {
     int result = -1; // Result of the function
@@ -667,6 +668,7 @@ void Handle_SC_Exec()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Join from user program
 void Handle_SC_Join()
 {
     // Read system call parameters
@@ -680,6 +682,7 @@ void Handle_SC_Join()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Exit from user program
 void Handle_SC_Exit()
 {
     // Read system call parameters
@@ -705,6 +708,7 @@ void Handle_SC_Exit()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_CreateSemaphore from user program
 void Handle_SC_CreateSemaphore()
 {
     int result = -1;
@@ -739,6 +743,7 @@ void Handle_SC_CreateSemaphore()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Down from user program
 void Handle_SC_Down()
 {
     int result = -1;
@@ -773,6 +778,7 @@ void Handle_SC_Down()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Up from user program
 void Handle_SC_Up()
 {
     int result = -1;
@@ -806,6 +812,7 @@ void Handle_SC_Up()
     return IncreasePC();
 }
 
+/// @brief Handle system call SC_Seek from user program
 void Handle_SC_Seek()
 {
     int pos = machine->ReadRegister(4); // Read position PARAMETER from register 4

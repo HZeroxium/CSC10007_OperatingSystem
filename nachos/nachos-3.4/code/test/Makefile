@@ -36,7 +36,7 @@ INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
 # ---------------------------------------------------------------------------------------
-all: halt ping pong scheduler
+all: halt ping pong scheduler scan passenger scan_passenger
 # ---------------------------------------------------------------------------------------
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
@@ -70,5 +70,26 @@ scheduler.o: scheduler.c
 scheduler: scheduler.o start.o
 	$(LD) $(LDFLAGS) start.o scheduler.o -o scheduler.coff
 	../bin/coff2noff scheduler.coff scheduler
+
+# ---------------------------------------------------------------------------------------
+scan.o: scan.c
+	$(CC) $(CFLAGS) -c scan.c
+scan: scan.o start.o
+	$(LD) $(LDFLAGS) start.o scan.o -o scan.coff
+	../bin/coff2noff scan.coff scan
+
+# ---------------------------------------------------------------------------------------
+passenger.o: passenger.c
+	$(CC) $(CFLAGS) -c passenger.c
+passenger: passenger.o start.o
+	$(LD) $(LDFLAGS) start.o passenger.o -o passenger.coff
+	../bin/coff2noff passenger.coff passenger
+
+# ---------------------------------------------------------------------------------------
+scan_passenger.o: scan_passenger.c
+	$(CC) $(CFLAGS) -c scan_passenger.c
+scan_passenger: scan_passenger.o start.o
+	$(LD) $(LDFLAGS) start.o scan_passenger.o -o scan_passenger.coff
+	../bin/coff2noff scan_passenger.coff scan_passenger
 
 

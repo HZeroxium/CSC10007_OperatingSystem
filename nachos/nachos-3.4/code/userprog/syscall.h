@@ -29,6 +29,7 @@
 #define SC_Close 8
 #define SC_Fork 9
 #define SC_Yield 10
+#define SC_Seek 11
 
 #define SC_ReadInt 41
 #define SC_PrintInt 42
@@ -165,6 +166,12 @@ int Read(char *buffer, int size, OpenFileId id);
 /// @note + Return -1 if the file is not found or id is out of range or the file is not opened in write mode (stdin)
 /// @note + Return -3 if unknown error occurs
 int Write(char *buffer, int size, OpenFileId id);
+
+/// @brief Move the file pointer to the given position
+/// @param pos Position to move the file pointer to (Stored in register 4)
+/// @param id OpenFileId of the file to be seeked (Stored in register 5)
+/// @return 0 if the file pointer is moved successfully, -1 otherwise
+int Seek(int pos, OpenFileId id);
 
 //==================================================================================================
 //==================================================================================================

@@ -761,6 +761,7 @@ void Handle_SC_Down()
         // Check if semaphore is not exist
         if (result == -1)
         {
+            SynchPrint(name);
             SynchPrint("Can't down semaphore because semaphore is not exist\n");
         }
     }
@@ -802,6 +803,45 @@ void Handle_SC_Up()
     machine->WriteRegister(2, result); // Write result to register 2
 
     // Increase Program Counter
+    return IncreasePC();
+}
+
+void Handle_SC_Seek()
+{
+    int pos = machine->ReadRegister(4); // Read position PARAMETER from register 4
+    int id = machine->ReadRegister(5);  // Read file descriptor PARAMETER from register 5
+    int result = -1;                    // Result of the function
+
+    if (id < 0 || id >= MAX_FILE) // If file descriptor is out of range
+    {
+        SynchPrint("\nOut of range file descriptor.");
+    }
+
+    if (fileSystem->file_table[id] == NULL) // If file is not exist
+    {
+        SynchPrint("\nCan't open file because file is not exist.");
+    }
+
+    else if (fileSystem->file_table[id]->type == STDIN || fileSystem->file_table[id]->type == STDOUT) // If file is stdin or stdout
+    {
+        SynchPrint("\nCan't seek console input or output.");
+    }
+
+    pos = (pos == -1) ? fileSystem->file_table[id]->Length() : pos; // If position is -1, set position to the end of file
+
+    if (pos > fileSystem->file_table[id]->Length() || pos < 0) // If position is out of range
+    {
+        SynchPrint("\nOut of range position.");
+    }
+
+    else // If position is in range
+    {
+        fileSystem->file_table[id]->Seek(pos); // Set position of file to pos
+        result = pos;                          // Success, return pos
+    }
+
+    // Write result to register 2
+    machine->WriteRegister(2, result);
     return IncreasePC();
 }
 
@@ -862,6 +902,8 @@ void ExceptionHandler(ExceptionType which)
             return Handle_SC_Down();
         case SC_Up:
             return Handle_SC_Up();
+        case SC_Seek:
+            return Handle_SC_Seek();
         default:
             interrupt->Halt();
             break;
